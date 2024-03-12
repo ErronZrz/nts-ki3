@@ -2,7 +2,6 @@ package parser
 
 import (
 	"active/datastruct"
-	"active/tcp"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -41,22 +40,6 @@ type record struct {
 	rType    uint16
 	bodyLen  uint16
 	body     []byte
-}
-
-func ParseNTSsp(host string) {
-	resBytes, err := tcp.WriteReadTLS(host, 4460, "www.edwardchatgpt.cloud", reqBytes)
-	n := len(resBytes)
-	if n == 0 {
-		fmt.Println("Error:", err.Error())
-		return
-	}
-	fmt.Printf("%d bytes received\n", n)
-	res, err := ParseNTSResponse(resBytes)
-	if err != nil {
-		fmt.Println("error")
-	} else {
-		fmt.Print(res.Lines())
-	}
 }
 
 func ParseNTSResponse(data []byte) (*Response, error) {
@@ -116,6 +99,12 @@ func ParseDetectInfo(data []byte, info datastruct.DetectInfo) error {
 				}
 				info.AEADList[r.body[1]] = true
 			}
+		// Cookie
+		case 5:
+			if r.bodyLen == 0 {
+				return errors.New("empty body in Cookie record")
+			}
+			info.CookieLength = int(r.bodyLen)
 		// NTPv4 Server
 		case 6:
 			if r.bodyLen == 0 {

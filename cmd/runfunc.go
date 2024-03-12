@@ -68,7 +68,8 @@ func executeAsync(cmd *cobra.Command, args []string) error {
 		"num of printed hosts: %d\n\n", cmdName, address, nPrintedHosts)
 
 	startTime := time.Now()
-	dataCh := async.DialNetworkNTP(address, 1)
+	// dataCh := async.DialNetworkNTP(address, 1)
+	dataCh := async.DialNetworkNTP(address)
 
 	if dataCh == nil {
 		return errors.New("dataCh is nil")

@@ -109,10 +109,10 @@ func generateStratumPrecisionBarChart(precisionList []int64, stratum, dstDir, pr
 	for _, precision := range precisionList {
 		values[precision-minPrecision]++
 	}
-	var max float64 = 0
+	var maxVal float64 = 0
 	for i, value := range values {
-		if value > max {
-			max = value
+		if value > maxVal {
+			maxVal = value
 		}
 		labels[i] = strconv.FormatInt(int64(i)+minPrecision, 10)
 	}
@@ -121,7 +121,7 @@ func generateStratumPrecisionBarChart(precisionList []int64, stratum, dstDir, pr
 	p.Title.Text = fmt.Sprintf("Distribution of Poll for %s", stratum)
 	p.X.Label.Text = "Poll"
 	p.Y.Label.Text = "Count"
-	p.Y.Max = stretchMax(max, false)
+	p.Y.Max = stretchMax(maxVal, false)
 	p.Y.Tick.Marker = plot.ConstantTicks(getMarks(p.Y.Max))
 
 	bars, err := plotter.NewBarChart(values, vg.Points(20))
@@ -130,7 +130,7 @@ func generateStratumPrecisionBarChart(precisionList []int64, stratum, dstDir, pr
 	}
 	bars.LineStyle.Width = vg.Length(0)
 	bars.Color = plotutil.Color(0)
-	bars.ShowValue = true
+	// bars.ShowValue = true
 
 	p.Add(bars)
 	p.NominalX(labels...)

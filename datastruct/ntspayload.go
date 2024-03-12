@@ -31,6 +31,7 @@ type NTSDetectPayload struct {
 }
 
 type DetectInfo struct {
+	CookieLength  int
 	AEADList      []bool
 	ServerPortSet map[string]struct{}
 }

@@ -9,7 +9,6 @@ import (
 )
 
 func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, error) {
-	//var mutex sync.Mutex
 	config := new(tls.Config)
 	config.NextProtos = []string{alpnID}
 	if serverName != "" {
@@ -19,53 +18,31 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 	}
 
 	addr := host + ":4460"
-	//Timeout := 5 * time.Second
 	dialer := &net.Dialer{
 		Timeout:   20 * time.Second,
 		KeepAlive: 20 * time.Second,
 	}
-	//timeout := 30 * time.Second
-	//conn, err := net.DialTimeout("tcp", addr, timeout)
-	conn, err := tls.DialWithDialer(dialer, "tcp", addr, config)
-	if err != nil {
+
+	var conn *tls.Conn
+	var err error
+	// 最大尝试次数
+	maxAttempts := 10
+	for i := 0; i < maxAttempts; i++ {
 		conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-		if err != nil {
-			conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-			if err != nil {
-				conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-				if err != nil {
-					conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-					if err != nil {
-						conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-						if err != nil {
-							conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-							if err != nil {
-								conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-								if err != nil {
-									conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-									if err != nil {
-										conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-										if err != nil {
-											conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-											if err != nil {
-												return nil, fmt.Errorf("cannot dial TLS server %s: %v", addr, err)
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		if err == nil {
+			break
 		}
 	}
-	defer conn.Close()
+	if err != nil {
+		return nil, fmt.Errorf("cannot dial TLS server %s after %d attempts: %v", addr, maxAttempts, err)
+	}
+	defer func() { _ = conn.Close() }()
 
-	conn.SetReadDeadline(time.Now().Add(20 * time.Second))
-	conn.SetWriteDeadline(time.Now().Add(20 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(20 * time.Second))
+	_ = conn.SetWriteDeadline(time.Now().Add(20 * time.Second))
 
 	info := datastruct.DetectInfo{
+		CookieLength:  100,
 		AEADList:      make([]bool, 34),
 		ServerPortSet: make(map[string]struct{}),
 	}
@@ -77,13 +54,13 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 		Info:   info,
 	}
 
-	//certs := conn.ConnectionState().PeerCertificates
-	//if len(certs) > 0 {
-	//	res.CertDomain = certs[0].Subject.CommonName
-	//}
+	// 获取证书域名
+	certs := conn.ConnectionState().PeerCertificates
+	if len(certs) > 0 {
+		res.CertDomain = certs[0].Subject.CommonName
+	}
 
 	for id := byte(0x0F); id <= 0x11; id++ {
-		//var conn *tls.Conn
 		if id != 0x0F {
 			conn, err = newConnection(addr, config, dialer)
 			if err != nil {
@@ -95,13 +72,6 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 		if err != nil {
 			return nil, err
 		}
-
-		//name := datastruct.GetAEADName(id) + ":"
-		//status := "x"
-		//if info.AEADList[id] {
-		//	status = "supported"
-		//}
-		//fmt.Printf("- (%02X) %-27s   %s\n", id, name, status)
 	}
 
 	supportOther, err := checkOtherThanAesSivCmac(conn, info)
@@ -127,13 +97,6 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 		if err != nil {
 			return nil, err
 		}
-
-		//name := datastruct.GetAEADName(id) + ":"
-		//status := "x"
-		//if info.AEADList[id] {
-		//	status = "supported"
-		//}
-		//fmt.Printf("- (%02X) %-27s   %s\n", id, name, status)
 	}
 	fmt.Println()
 
@@ -141,41 +104,15 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 }
 
 func newConnection(addr string, config *tls.Config, dialer *net.Dialer) (*tls.Conn, error) {
-
-	conn, err := tls.DialWithDialer(dialer, "tcp", addr, config)
-	if err != nil {
+	var conn *tls.Conn
+	var err error
+	// 最大尝试次数
+	maxAttempts := 10
+	for i := 0; i < maxAttempts; i++ {
 		conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-		if err != nil {
-			conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-			if err != nil {
-				conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-				if err != nil {
-					conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-					if err != nil {
-						conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-						if err != nil {
-							conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-							if err != nil {
-								conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-								if err != nil {
-									conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-									if err != nil {
-										conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-										if err != nil {
-											conn, err = tls.DialWithDialer(dialer, "tcp", addr, config)
-											if err != nil {
-												return nil, fmt.Errorf("cannot dial TLS server %s: %v", addr, err)
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		if err == nil {
+			return conn, nil
 		}
 	}
-	return conn, nil
+	return nil, fmt.Errorf("cannot dial TLS server %s after %d attempts: %v", addr, maxAttempts, err)
 }
-
