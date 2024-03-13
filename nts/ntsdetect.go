@@ -33,7 +33,7 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 			break
 		}
 	}
-	if err != nil {
+	if err != nil || conn == nil {
 		return nil, fmt.Errorf("cannot dial TLS server %s after %d attempts: %v", addr, maxAttempts, err)
 	}
 	defer func() { _ = conn.Close() }()
@@ -41,7 +41,7 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 	_ = conn.SetReadDeadline(time.Now().Add(20 * time.Second))
 	_ = conn.SetWriteDeadline(time.Now().Add(20 * time.Second))
 
-	info := datastruct.DetectInfo{
+	info := &datastruct.DetectInfo{
 		CookieLength:  100,
 		AEADList:      make([]bool, 34),
 		ServerPortSet: make(map[string]struct{}),

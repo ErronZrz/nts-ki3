@@ -79,7 +79,7 @@ func (r *Response) Lines() string {
 	return r.buf.String()
 }
 
-func ParseDetectInfo(data []byte, info datastruct.DetectInfo) error {
+func ParseDetectInfo(data []byte, info *datastruct.DetectInfo) error {
 	records, err := retrieveRecords(data)
 	if err != nil {
 		return err
@@ -163,7 +163,8 @@ func retrieveRecords(data []byte) ([]*record, error) {
 		}
 		endPos := cur + int(bodyLen)
 		if endPos > n {
-			return nil, errors.New("a record with an incorrect body length exists at the end")
+			errStr := fmt.Sprintf("an incomplete record exists at pos %d with length %d with total length %d", cur, bodyLen, n)
+			return nil, errors.New(errStr)
 		}
 		next.bodyLen = bodyLen
 		next.body = data[cur:endPos]

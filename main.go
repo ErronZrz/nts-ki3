@@ -121,10 +121,9 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 		return
 	}
 
-	fmt.Printf("NTS Server Detection Result for %s:\n", ip)
+	// fmt.Printf("NTS Server Detection Result for %s:\n", ip)
 
 	// 1. 打印 IP 地址
-	// TODO: 需要进一步了解 Hive 如何将 IP 地址映射到区域代码并修改代码
 	mutex.Lock()
 	_, err = writer.WriteString(ip)
 	mutex.Unlock()

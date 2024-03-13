@@ -21,7 +21,7 @@ var (
 	}
 )
 
-func singleReadWrite(aeadID byte, conn *tls.Conn, info datastruct.DetectInfo) error {
+func singleReadWrite(aeadID byte, conn *tls.Conn, info *datastruct.DetectInfo) error {
 	//defer func(conn *tls.Conn) {
 	//	err := conn.Close()
 	//	if err != nil {
@@ -40,16 +40,17 @@ func singleReadWrite(aeadID byte, conn *tls.Conn, info datastruct.DetectInfo) er
 	if err != nil {
 		return fmt.Errorf("read NTS-KE response failed: %v", err)
 	}
-	res, err := parser.ParseNTSResponse(data)
-	if err != nil {
-		fmt.Println("error")
-	} else {
-		fmt.Print(res.Lines())
-	}
+	_, _ = parser.ParseNTSResponse(data)
+	/*
+		if err != nil {
+			fmt.Println("error")
+		} else {
+			fmt.Print(res.Lines())
+		}*/
 	return parser.ParseDetectInfo(data, info)
 }
 
-func checkOtherThanAesSivCmac(conn *tls.Conn, info datastruct.DetectInfo) (bool, error) {
+func checkOtherThanAesSivCmac(conn *tls.Conn, info *datastruct.DetectInfo) (bool, error) {
 	defer func(conn *tls.Conn) {
 		err := conn.Close()
 		if err != nil {

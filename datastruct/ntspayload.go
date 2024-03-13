@@ -27,7 +27,7 @@ type NTSDetectPayload struct {
 	Port       int
 	CertDomain string
 	Secure     bool
-	Info       DetectInfo
+	Info       *DetectInfo
 }
 
 type DetectInfo struct {
