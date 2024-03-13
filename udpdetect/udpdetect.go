@@ -4,7 +4,6 @@ import (
 	"active/addr"
 	"active/datastruct"
 	"active/utils"
-	"fmt"
 	"github.com/spf13/viper"
 	"net"
 	"sync"
@@ -31,7 +30,7 @@ func init() {
 	viper.SetDefault(batchSizeKey, defaultBatchSize)
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("error reading resource file: %v", err)
+		// fmt.Printf("error reading resource file: %v", err)
 		return
 	}
 	milli := time.Duration(viper.GetInt64(timeoutKey))

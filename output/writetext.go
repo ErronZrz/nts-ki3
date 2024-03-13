@@ -24,7 +24,7 @@ func init() {
 	viper.SetConfigName("properties")
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("error reading resource file: %v", err)
+		// fmt.Printf("error reading resource file: %v", err)
 	}
 }
 

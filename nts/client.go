@@ -40,7 +40,7 @@ func init() {
 	viper.SetDefault(haltTimeKey, defaultHaltTime)
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("error reading resource file: %v", err)
+		// fmt.Printf("error reading resource file: %v", err)
 		return
 	}
 	timeout = time.Duration(viper.GetInt64(timeoutKey)) * time.Millisecond

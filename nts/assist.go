@@ -52,10 +52,12 @@ func singleReadWrite(aeadID byte, conn *tls.Conn, info *datastruct.DetectInfo) e
 
 func checkOtherThanAesSivCmac(conn *tls.Conn, info *datastruct.DetectInfo) (bool, error) {
 	defer func(conn *tls.Conn) {
-		err := conn.Close()
-		if err != nil {
-			fmt.Printf("error closing TLS connection: %v", err)
-		}
+		/*
+			err := conn.Close()
+			if err != nil {
+				fmt.Printf("error closing TLS connection: %v", err)
+			}*/
+		_ = conn.Close()
 	}(conn)
 
 	_, err := conn.Write(otherThanAesSivCmac)

@@ -103,7 +103,7 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	// 进行探测
 	result, err := nts.DetectNTSServer(ip, "")
 	if err != nil {
-		log.Printf("Error detecting NTS server at %s: %v", ip, err)
+		// log.Printf("Error detecting NTS server at %s: %v", ip, err)
 		return
 	}
 
@@ -117,7 +117,7 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	}
 	// 若不支持任何 AEAD 算法，则打印消息并返回
 	if len(supportedIds) == 0 {
-		log.Printf("No supported AEAD algorithms detected for %s", ip)
+		// log.Printf("No supported AEAD algorithms detected for %s", ip)
 		return
 	}
 
@@ -180,7 +180,7 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	_, err = writer.WriteString("\t" + strconv.Itoa(info.CookieLength))
 	mutex.Unlock()
 	if err != nil {
-		log.Printf("Error writing to output file: %v", err)
+		// log.Printf("Error writing to output file: %v", err)
 		return
 	}
 
