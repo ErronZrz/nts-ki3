@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, error) {
+func DetectNTSServer(host, serverName string, timeout int) (*datastruct.NTSDetectPayload, error) {
 	config := new(tls.Config)
 	config.NextProtos = []string{alpnID}
 	if serverName != "" {
@@ -19,8 +19,8 @@ func DetectNTSServer(host, serverName string) (*datastruct.NTSDetectPayload, err
 
 	addr := host + ":4460"
 	dialer := &net.Dialer{
-		Timeout:   20 * time.Second,
-		KeepAlive: 20 * time.Second,
+		Timeout:   time.Duration(timeout) * time.Second,
+		KeepAlive: time.Duration(timeout) * time.Second,
 	}
 
 	var conn *tls.Conn

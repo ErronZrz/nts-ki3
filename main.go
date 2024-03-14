@@ -13,6 +13,10 @@ import (
 	"sync"
 )
 
+var (
+	timeout int
+)
+
 func main() {
 	// 定义命令行参数
 	var date string
@@ -21,6 +25,7 @@ func main() {
 	flag.StringVar(&date, "date", "", "The date in format YYYY-MM-DD")
 	flag.IntVar(&index, "index", 0, "The index of the file to process")
 	flag.IntVar(&maxGoroutines, "maxgoroutines", 100, "The maximum number of goroutines to run at once")
+	flag.IntVar(&timeout, "timeout", 20, "The timeout in seconds for each NTS server detection")
 	flag.Parse()
 
 	// 检查日期参数是否已提供
@@ -101,7 +106,7 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	defer func() { <-limitChan }()
 
 	// 进行探测
-	result, err := nts.DetectNTSServer(ip, "")
+	result, err := nts.DetectNTSServer(ip, "", timeout)
 	if err != nil {
 		// log.Printf("Error detecting NTS server at %s: %v", ip, err)
 		return

@@ -301,7 +301,7 @@ func checkTLS(domain, ip string) error {
 }
 
 func detectAEAD(_, ip string) error {
-	payload, err := nts.DetectNTSServer(ip, "")
+	payload, err := nts.DetectNTSServer(ip, "", 20)
 	if err != nil {
 		if strings.Contains(err.Error(), "cannot dial TLS server") {
 			return nil

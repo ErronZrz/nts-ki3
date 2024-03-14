@@ -32,7 +32,7 @@ func TestWriteNTSToFile(t *testing.T) {
 func TestWriteNTSDetectToFile(t *testing.T) {
 	host := "84.255.251.205"
 	serverName := ""
-	payload, err := nts.DetectNTSServer(host, serverName)
+	payload, err := nts.DetectNTSServer(host, serverName, 20)
 	if err != nil {
 		t.Error(err)
 		return

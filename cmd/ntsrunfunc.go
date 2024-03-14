@@ -73,7 +73,7 @@ func executeNTSAlgo(cmd *cobra.Command, args []string) error {
 
 	startTime := time.Now()
 
-	payload, err := nts.DetectNTSServer(host, serverName)
+	payload, err := nts.DetectNTSServer(host, serverName, 20)
 	if err != nil {
 		return err
 	}
