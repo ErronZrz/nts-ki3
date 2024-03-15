@@ -36,7 +36,7 @@ func DetectNTSServer(host, serverName string, timeout int) (*datastruct.NTSDetec
 	if err != nil || conn == nil {
 		return nil, fmt.Errorf("cannot dial TLS server %s after %d attempts: %v", addr, maxAttempts, err)
 	}
-	defer func() { _ = conn.Close() }()
+	defer func(conn *tls.Conn) { _ = conn.Close() }(conn)
 
 	_ = conn.SetReadDeadline(time.Now().Add(20 * time.Second))
 	_ = conn.SetWriteDeadline(time.Now().Add(20 * time.Second))
