@@ -128,19 +128,34 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 
 	// fmt.Printf("NTS Server Detection Result for %s:\n", ip)
 
-	// 1. 打印 IP 地址
+	size := writer.Buffered()
+
 	mutex.Lock()
+	defer mutex.Unlock()
+
+	// 1. 打印 IP 地址
 	_, err = writer.WriteString(ip)
-	mutex.Unlock()
+	newSize := writer.Buffered()
+	fmt.Println(newSize)
+	// 如果 newSize == size，表明没有打印成功
+	if newSize == size {
+		log.Printf("Did not actually write string: %s", ip)
+		return
+	}
+	size = newSize
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)
 		return
 	}
 
 	// 2. 打印证书域名
-	mutex.Lock()
 	_, err = writer.WriteString("\t" + result.CertDomain)
-	mutex.Unlock()
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s", result.CertDomain)
+		return
+	}
+	size = newSize
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)
 		return
@@ -158,9 +173,13 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	if port == "" {
 		port = "123"
 	}
-	mutex.Lock()
 	_, err = writer.WriteString("\t" + server + "\t" + port)
-	mutex.Unlock()
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s:%s", server, port)
+		return
+	}
+	size = newSize
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)
 		return
@@ -172,27 +191,34 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 		names[i] = datastruct.GetAEADName(byte(id))
 	}
 	namesStr := strings.Join(names, ",")
-	mutex.Lock()
 	_, err = writer.WriteString("\t" + namesStr)
-	mutex.Unlock()
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s", namesStr)
+		return
+	}
+	size = newSize
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)
 		return
 	}
 
 	// 5. 打印 Cookie 长度
-	mutex.Lock()
-	_, err = writer.WriteString("\t" + strconv.Itoa(info.CookieLength))
-	mutex.Unlock()
+	lengthStr := strconv.Itoa(info.CookieLength)
+	_, err = writer.WriteString("\t" + lengthStr)
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s", lengthStr)
+		return
+	}
+	size = newSize
 	if err != nil {
 		// log.Printf("Error writing to output file: %v", err)
 		return
 	}
 
 	// 6. 打印换行符
-	mutex.Lock()
 	_, err = writer.WriteString("\n")
-	mutex.Unlock()
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)
 	}
