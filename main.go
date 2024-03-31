@@ -136,7 +136,6 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	// 1. 打印 IP 地址
 	_, err = writer.WriteString(ip)
 	newSize := writer.Buffered()
-	fmt.Println(newSize)
 	// 如果 newSize == size，表明没有打印成功
 	if newSize == size {
 		log.Printf("Did not actually write string: %s", ip)
