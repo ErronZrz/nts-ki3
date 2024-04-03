@@ -3,6 +3,7 @@ module active
 go 1.21
 
 require (
+	github.com/google/gopacket v1.1.19
 	github.com/lionsoul2014/ip2region/binding/golang v0.0.0-20240307020853-f8f5f687e6a2
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2

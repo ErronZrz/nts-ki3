@@ -28,6 +28,7 @@ type stepFunc func([]byte, *Header) error
 
 const (
 	HeaderLength = 48
+	InitSource   = "INIT"
 )
 
 const (
@@ -172,7 +173,7 @@ func parseRootDisp(data []byte, h *Header) error {
 }
 
 func parseRefID(data []byte, h *Header) error {
-	if h.Stratum == "1" {
+	if h.Stratum == "1" || string(data[12:16]) == InitSource {
 		// Special reference identifier
 		h.RefID = completeSource(data[12:16])
 	} else {
