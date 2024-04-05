@@ -6,7 +6,7 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-func FetchNTPPackets(filePath string) ([][]byte, error) {
+func FetchNTPPackets(filePath string, limit int) ([][]byte, error) {
 	var packets [][]byte
 
 	// 打开.pcap文件
@@ -32,6 +32,9 @@ func FetchNTPPackets(filePath string) ([][]byte, error) {
 
 		// 此时 udp.Payload 即为 NTP 的数据部分
 		packets = append(packets, udp.Payload)
+		if limit > 0 && len(packets) >= limit {
+			break
+		}
 	}
 
 	return packets, nil

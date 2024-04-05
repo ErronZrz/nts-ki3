@@ -4,6 +4,7 @@ import (
 	"active/parser"
 	"encoding/binary"
 	"errors"
+	"fmt"
 )
 
 type NTPPacket struct {
@@ -24,7 +25,7 @@ type NTPPacket struct {
 
 func ParseNTPPacket(data []byte) (*NTPPacket, error) {
 	if len(data) < parser.HeaderLength {
-		return nil, errors.New("data is too short")
+		return nil, errors.New(fmt.Sprintf("NTP packet too short: %d bytes", len(data)))
 	}
 
 	p := new(NTPPacket)
