@@ -66,22 +66,16 @@ func DetectNTSServer(host, serverName string, timeout int) (*datastruct.NTSDetec
 	// 添加主题公用名称
 	res.CertDomain = commonName
 	// 添加主题备用名称
-	for _, name := range cert.DNSNames {
-		res.CertDomain += "," + name
-	}
+	//for _, name := range cert.DNSNames {
+	//	res.CertDomain += "," + name
+	//}
 
-	// 如果证书未生效或者已过期则打印
-	now := time.Now()
-	if now.Before(cert.NotBefore) {
-		fmt.Println("Certificate is not yet valid: " + commonName)
-	} else if now.After(cert.NotAfter) {
-		fmt.Println("Certificate has expired: " + commonName)
-	}
+	// 记录证书是否自签名
+	res.SelfSigned = cert.Issuer.CommonName == commonName
 
-	// 如果证书是自签名证书则打印
-	if cert.Issuer.CommonName == commonName {
-		fmt.Println("Self-signed certificate: " + commonName)
-	}
+	// 记录证书有效期
+	res.NotBefore = cert.NotBefore
+	res.NotAfter = cert.NotAfter
 
 	for id := byte(0x0F); id <= 0x11; id++ {
 		if id != 0x0F {

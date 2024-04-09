@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var (
@@ -212,11 +213,63 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 	}
 	size = newSize
 	if err != nil {
-		// log.Printf("Error writing to output file: %v", err)
+		log.Printf("Error writing to output file: %v", err)
 		return
 	}
 
-	// 6. 打印换行符
+	// 6. 打印是否过期以及是否自签名，0 为未过期，1 为已过期，2 为未生效，0 为非自签名，1 为自签名
+	var expireFlag, selfSignedFlag int
+	now := time.Now()
+	if now.After(result.NotAfter) {
+		expireFlag = 1
+	} else if now.Before(result.NotBefore) {
+		expireFlag = 2
+	}
+	if result.SelfSigned {
+		selfSignedFlag = 1
+	}
+	_, err = writer.WriteString(fmt.Sprintf("\t%d\t%d", expireFlag, selfSignedFlag))
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %d,%d", expireFlag, selfSignedFlag)
+		return
+	}
+	size = newSize
+	if err != nil {
+		log.Printf("Error writing to output file: %v", err)
+		return
+	}
+
+	// 7. 打印有效期
+	layout := "2006-01-02 15:04:05"
+	notBeforeStr := result.NotBefore.Format(layout)
+	notAfterStr := result.NotAfter.Format(layout)
+	_, err = writer.WriteString("\t" + notBeforeStr + "\t" + notAfterStr)
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s,%s", notBeforeStr, notAfterStr)
+		return
+	}
+	size = newSize
+	if err != nil {
+		log.Printf("Error writing to output file: %v", err)
+		return
+	}
+
+	// 8. 打印当前时间
+	_, err = writer.WriteString("\t" + now.Format(layout))
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s", now.Format(layout))
+		return
+	}
+	size = newSize
+	if err != nil {
+		log.Printf("Error writing to output file: %v", err)
+		return
+	}
+
+	// 9. 打印换行符
 	_, err = writer.WriteString("\n")
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)

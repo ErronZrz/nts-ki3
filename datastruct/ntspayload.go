@@ -4,6 +4,7 @@ import (
 	"active/utils"
 	"bytes"
 	"fmt"
+	"time"
 )
 
 const (
@@ -27,6 +28,9 @@ type NTSDetectPayload struct {
 	Port       int
 	CertDomain string
 	Secure     bool
+	SelfSigned bool
+	NotBefore  time.Time
+	NotAfter   time.Time
 	Info       *DetectInfo
 }
 
