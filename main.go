@@ -256,7 +256,20 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 		return
 	}
 
-	// 8. 打印当前时间
+	// 8. 打印证书颁发者
+	_, err = writer.WriteString("\t" + result.Issuer)
+	newSize = writer.Buffered()
+	if newSize == size {
+		log.Printf("Did not actually write string: %s", result.Issuer)
+		return
+	}
+	size = newSize
+	if err != nil {
+		log.Printf("Error writing to output file: %v", err)
+		return
+	}
+
+	// 9. 打印当前时间
 	_, err = writer.WriteString("\t" + now.Format(layout))
 	newSize = writer.Buffered()
 	if newSize == size {
@@ -269,7 +282,7 @@ func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex,
 		return
 	}
 
-	// 9. 打印换行符
+	// 10. 打印换行符
 	_, err = writer.WriteString("\n")
 	if err != nil {
 		log.Printf("Error writing to output file: %v", err)

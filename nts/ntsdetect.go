@@ -72,6 +72,7 @@ func DetectNTSServer(host, serverName string, timeout int) (*datastruct.NTSDetec
 
 	// 记录证书是否自签名
 	res.SelfSigned = cert.Issuer.CommonName == commonName
+	res.Issuer = cert.Issuer.Organization[0] + "\t" + cert.Issuer.CommonName
 
 	// 记录证书有效期
 	res.NotBefore = cert.NotBefore

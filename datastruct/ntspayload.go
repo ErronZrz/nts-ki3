@@ -31,6 +31,7 @@ type NTSDetectPayload struct {
 	SelfSigned bool
 	NotBefore  time.Time
 	NotAfter   time.Time
+	Issuer     string
 	Info       *DetectInfo
 }
 
