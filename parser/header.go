@@ -57,9 +57,9 @@ var (
 
 func ParseHeader(data []byte) (*Header, error) {
 	if len(data) < HeaderLength {
-		for _, b := range data {
-			fmt.Printf("%02X", b)
-		}
+		//for _, b := range data {
+		//	fmt.Printf("%02X", b)
+		//}
 		return nil, errors.New(fmt.Sprintf("header length %d less than 48", len(data)))
 	}
 	res := &Header{}

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	configPath         = "../resource/"
+	configPath         = "../resources/"
 	outputPathKey      = "output.dir_path"
 	fileTimeFormat     = "/2006-01-02_15-04-05_"
 	dividingLineFormat = "------------ 15:04:05.000 ------------\n"

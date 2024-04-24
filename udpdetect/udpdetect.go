@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	configPath       = "../resource/"
+	configPath       = "../resources/"
 	timeoutKey       = "detection.rcv_header.timeout"
 	batchSizeKey     = "detection.send_udp.batch_size"
 	defaultTimeout   = 500

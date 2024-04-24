@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	configPath           = "../resource/"
+	configPath           = "../resources/"
 	localPortKey         = "async.local_port"
 	checkIntervalKey     = "async.read.check_interval"
 	timeoutKey           = "async.read.timeout"

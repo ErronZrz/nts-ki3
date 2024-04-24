@@ -15,7 +15,7 @@ const (
 	alpnID          = "ntske/1"
 	exportLabel     = "EXPORTER-network-time-security"
 	keyLength       = 32
-	configPath      = "../resource/"
+	configPath      = "../resources/"
 	timeoutKey      = "nts.dial_timeout"
 	haltTimeKey     = "nts.detect.halt_time"
 	defaultTimeout  = 5000

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	configPath    = "../resource/"
+	configPath    = "../resources/"
 	dbPathKey     = "ip2region.db_path"
 	nullIP        = "0.0.0.0"
 	nullFlag      = "未同步"

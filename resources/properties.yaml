@@ -1,0 +1,26 @@
+detection:
+  send_udp:
+    batch_size: 128
+  rcv_header:
+    timeout: 3000
+
+async:
+  local_port: 11123
+  send:
+    halt_time: 100
+    parts: 4
+  read:
+    check_interval: 100
+    timeout: 1000
+
+nts:
+  dial_timeout: 3000
+  detect:
+    halt_time: 100
+
+ip2region:
+  db_path: D:/Desktop/LearnSth/nts-ki3/resources/ip2region.xdb
+
+output:
+  dir_path: D:/Desktop/Detect/output
+  nts_path: D:/Desktop/Detect/output_nts
