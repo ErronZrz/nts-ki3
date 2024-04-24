@@ -19,7 +19,7 @@ nts:
     halt_time: 100
 
 ip2region:
-  db_path: D:/Desktop/LearnSth/nts-ki3/resources/ip2region.xdb
+  db_path: C:/Corner/TMP/毕设/NTP/Ntage3/nts-detect-txt/resources/ip2region.xdb
 
 output:
   dir_path: D:/Desktop/Detect/output

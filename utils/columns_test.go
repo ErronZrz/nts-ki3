@@ -16,3 +16,12 @@ func TestValueCount(t *testing.T) {
 		fmt.Println(countMap)
 	}
 }
+
+func TestPeriodCount(t *testing.T) {
+	path := "C:\\Corner\\TMP\\BisheData\\2024-04-11_ntske_1.txt"
+	countMap, err := PeriodCount(path)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(countMap)
+}
