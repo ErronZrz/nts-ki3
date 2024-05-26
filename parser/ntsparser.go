@@ -25,6 +25,8 @@ var (
 	reqBytes = []byte{
 		0x80, 0x01, 0x00, 0x02, 0x00, 0x00, 0x80, 0x04, 0x00, 0x02, 0x00, 0x0F, 0x80, 0x00, 0x00, 0x00,
 	}
+	FirstCookie []byte
+	TheServer   string
 )
 
 type Response struct {
@@ -245,6 +247,9 @@ func printCookie(r *record, buf *bytes.Buffer) error {
 	if r.bodyLen <= 16 {
 		return fmt.Errorf("too short body length in Cookie record: %d", r.bodyLen)
 	}
+	if FirstCookie == nil {
+		FirstCookie = r.body
+	}
 	buf.WriteString("Cookie = 0x")
 	for _, b := range r.body[:16] {
 		buf.WriteString(fmt.Sprintf("%02X", b))
@@ -257,6 +262,7 @@ func printServer(r *record, buf *bytes.Buffer) error {
 	if r.bodyLen == 0 {
 		return errors.New("empty body in NTPv4 Server record")
 	}
+	TheServer = string(r.body)
 	buf.WriteString("Server = ")
 	buf.Write(r.body)
 	return nil

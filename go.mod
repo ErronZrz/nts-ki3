@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/google/gopacket v1.1.19
 	github.com/lionsoul2014/ip2region/binding/golang v0.0.0-20240307020853-f8f5f687e6a2
+	github.com/secure-io/siv-go v0.0.0-20180922214919-5ff40651e2c4
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	gonum.org/v1/gonum v0.14.0
@@ -13,6 +14,7 @@ require (
 
 require (
 	git.sr.ht/~sbinet/gg v0.5.0 // indirect
+	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
 	github.com/campoy/embedmd v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
