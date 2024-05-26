@@ -8,7 +8,7 @@ import (
 )
 
 func TestWriteNTSToFile(t *testing.T) {
-	host := "208.113.130.146"
+	host := "192.168.187.128"
 	serverName := ""
 	payload, err := nts.DialNTSKE(host, serverName, 0x22)
 	if err != nil {

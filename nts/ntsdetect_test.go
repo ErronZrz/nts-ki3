@@ -8,7 +8,7 @@ import (
 func TestDetectNTSServer(t *testing.T) {
 	//host := "194.58.207.69"
 	//serverName := "sth1.nts.netnod.se"
-	host := "35.90.24.44"
+	host := "192.168.187.128"
 	serverName := ""
 	payload, err := DetectNTSServer(host, serverName, 20)
 	if err != nil {

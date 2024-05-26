@@ -23,4 +23,4 @@ ip2region:
 
 output:
   dir_path: D:/Desktop/Detect/output
-  nts_path: D:/Desktop/Detect/output_nts
+  nts_path: C:/Corner/Docu/2024-5/nts_output

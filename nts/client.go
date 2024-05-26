@@ -50,6 +50,8 @@ func init() {
 func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, error) {
 	config := new(tls.Config)
 	config.NextProtos = []string{alpnID}
+	config.MinVersion = tls.VersionTLS12
+	config.CipherSuites = []uint16{tls.TLS_AES_128_GCM_SHA256}
 	if serverName != "" {
 		config.ServerName = serverName
 	} else {
