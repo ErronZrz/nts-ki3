@@ -3,11 +3,13 @@ package nts
 import (
 	"active/parser"
 	"bufio"
-	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
+	"net"
 	"os"
+	"strings"
+	"time"
 )
 
 func CollectKeys(path string) error {
@@ -24,26 +26,24 @@ func CollectKeys(path string) error {
 	if err != nil {
 		return err
 	}
-
-	// 新建 reader 和 buf
-	reader := bufio.NewReader(file)
+	scanner := bufio.NewScanner(file)
 
 	// 遍历每行
-	for {
-		line, err := reader.ReadBytes('\n')
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
+	for scanner.Scan() {
+		line := scanner.Text()
 		// 读取第一个制表符的下标
-		i := bytes.IndexByte(line, '\t')
+		i := strings.IndexByte(line, '\t')
 
 		// 执行探测并解析
 		ip := line[:i]
-		payload, err := DialNTSKE(string(ip), "", 0x22)
+		payload, err := DialNTSKE(ip, "", 0x0F)
 		if err != nil {
+			// 检查是否是超时错误
+			errStr := err.Error()
+			if strings.Contains(errStr, "i/o timeout") || strings.Contains(errStr, "deadline exceeded") {
+				fmt.Println(ip + " " + errStr)
+				continue
+			}
 			return err
 		}
 		if payload.Len == 0 {
@@ -55,11 +55,12 @@ func CollectKeys(path string) error {
 		}
 
 		// 将服务器地址写入文件
-		if parser.TheServer == "" {
-			parser.TheServer = string(ip)
+		if parser.TheHost == "" {
+			parser.TheHost = ip
 		}
-		_, err = outputFile.WriteString(parser.TheServer + " ")
-		parser.TheServer = ""
+		_, err = outputFile.WriteString(parser.TheHost + ":" + parser.ThePort + " ")
+		parser.TheHost = ""
+		parser.ThePort = "123"
 		if err != nil {
 			return err
 		}
@@ -89,5 +90,80 @@ func CollectKeys(path string) error {
 	}
 
 	// 完成
+	return nil
+}
+
+func MakeSecureNTPRequests(path string) error {
+	// 打开 TXT 文件
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Close() }()
+
+	scanner := bufio.NewScanner(file)
+
+	// 遍历每行
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Split(line, " ")
+		addr, keyStr, cookieStr := parts[0], parts[1], parts[2]
+
+		// 解析密钥和 Cookie
+		key, err := hex.DecodeString(keyStr)
+		if err != nil {
+			return err
+		}
+		cookie, err := hex.DecodeString(cookieStr)
+		if err != nil {
+			return err
+		}
+
+		// 生成请求数据
+		req, err := GenerateSecureNTPRequest(key, cookie)
+		if err != nil {
+			return err
+		}
+
+		// 发送 UDP 数据
+		udpAddr, err := net.ResolveUDPAddr("udp", addr)
+		if err != nil {
+			// 检查是否是地址解析错误
+			if strings.Contains(err.Error(), "no such host") {
+				fmt.Println(addr + " no such host")
+				continue
+			}
+			return err
+		}
+
+		conn, err := net.DialUDP("udp", nil, udpAddr)
+		if err != nil {
+			return err
+		}
+		_, err = conn.Write(req)
+		if err != nil {
+			return err
+		}
+
+		// 接收响应
+		buf := make([]byte, 1024)
+		_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
+		_, _, err = conn.ReadFromUDP(buf)
+		if err != nil {
+			// 检查是否是超时错误
+			if strings.Contains(err.Error(), "i/o timeout") {
+				fmt.Println(addr + " timeout")
+			} else {
+				return err
+			}
+		}
+
+		// 关闭连接
+		err = conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

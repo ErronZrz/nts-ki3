@@ -24,9 +24,7 @@ const (
 
 var (
 	reqBytes = []byte{
-		0x80, 0x01, 0x00, 0x02, 0x00, 0x00, 0x80, 0x04, 0x00, 0x02, 0x00, 0x0F, 0x00, 0x06, 0x00, 0x0D,
-		0x31, 0x39, 0x34, 0x2E, 0x35, 0x38, 0x2E, 0x32, 0x30, 0x37, 0x2E, 0x38, 0x30, 0x00, 0x07, 0x00,
-		0x02, 0x10, 0x1B, 0x80, 0x00, 0x00, 0x00,
+		0x80, 0x01, 0x00, 0x02, 0x00, 0x00, 0x80, 0x04, 0x00, 0x02, 0x00, 0x0F, 0x80, 0x00, 0x00, 0x00,
 	}
 	timeout  time.Duration
 	haltTime time.Duration
@@ -83,23 +81,11 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 	if len(certs) > 0 {
 		res.CertDomain = certs[0].Subject.CommonName
 	}
-	ctx := make([]byte, 4)
-	ctx[3] = aeadID
-
-	res.C2SKey, err = state.ExportKeyingMaterial(exportLabel, append(ctx, 0x00), keyLength)
-	if err != nil {
-		return nil, fmt.Errorf("export C2S key failed: %v", err)
-	}
-	res.S2CKey, err = state.ExportKeyingMaterial(exportLabel, append(ctx, 0x01), keyLength)
-	if err != nil {
-		return nil, fmt.Errorf("export S2C key failed: %v", err)
-	}
 
 	if aeadID > 0x00 && aeadID <= 0x21 {
-		reqBytes[11] = aeadID
-	} else {
-		reqBytes[11] = aesSivCmac256
+		aeadID = aesSivCmac256
 	}
+	reqBytes[11] = aeadID
 
 	_, err = conn.Write(reqBytes)
 	if err != nil {
@@ -109,6 +95,17 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 	data, err := io.ReadAll(conn)
 	if err != nil {
 		return nil, fmt.Errorf("read NTS-KE response failed: %v", err)
+	}
+
+	ctx := make([]byte, 4)
+	ctx[3] = aeadID
+	res.C2SKey, err = state.ExportKeyingMaterial(exportLabel, append(ctx, 0x00), keyLength)
+	if err != nil {
+		return nil, fmt.Errorf("export C2S key failed: %v", err)
+	}
+	res.S2CKey, err = state.ExportKeyingMaterial(exportLabel, append(ctx, 0x01), keyLength)
+	if err != nil {
+		return nil, fmt.Errorf("export S2C key failed: %v", err)
 	}
 
 	res.Len = len(data)

@@ -9,7 +9,7 @@ import (
 )
 
 func GenerateSecureNTPRequest(c2s, cookie []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(nil)
+	buf := new(bytes.Buffer)
 	err := addHeader(buf)
 	if err != nil {
 		return nil, err
@@ -50,8 +50,7 @@ func addUniqueEF(buf *bytes.Buffer) error {
 }
 
 func addCookieEF(buf *bytes.Buffer, cookie []byte) error {
-	cookieLen := len(cookie)
-	_, err := buf.Write([]byte{0x02, 0x04, 0x00, byte(cookieLen) + 4})
+	_, err := buf.Write([]byte{0x02, 0x04, 0x00, byte(len(cookie)) + 4})
 	if err != nil {
 		return err
 	}
@@ -65,39 +64,35 @@ func addAuthEF(buf *bytes.Buffer, c2s []byte) error {
 		return err
 	}
 
-	bits := make([]byte, 16)
-	_, err = rand.Read(bits)
+	nonce := make([]byte, 16)
+	_, err = rand.Read(nonce)
 	if err != nil {
 		return err
 	}
 
-	nonce := bits
-
+	// fmt.Println(len(buf.Bytes()))
 	cipherText := algorithm.Seal(nil, nonce, nil, buf.Bytes())
-	cipherTextLen := uint16(len(cipherText))
 
 	nonceBuf := new(bytes.Buffer)
 	err = binary.Write(nonceBuf, binary.BigEndian, nonce)
 	if err != nil {
 		return err
 	}
-	nonceLen := uint16(nonceBuf.Len())
 
 	cipherBuf := new(bytes.Buffer)
 	err = binary.Write(cipherBuf, binary.BigEndian, cipherText)
 	if err != nil {
 		return err
 	}
-	cipherTextLen = uint16(cipherBuf.Len())
 
 	extensionBuf := new(bytes.Buffer)
 
-	err = binary.Write(extensionBuf, binary.BigEndian, nonceLen)
+	err = binary.Write(extensionBuf, binary.BigEndian, uint16(nonceBuf.Len()))
 	if err != nil {
 		return err
 	}
 
-	err = binary.Write(extensionBuf, binary.BigEndian, cipherTextLen)
+	err = binary.Write(extensionBuf, binary.BigEndian, uint16(cipherBuf.Len()))
 	if err != nil {
 		return err
 	}
