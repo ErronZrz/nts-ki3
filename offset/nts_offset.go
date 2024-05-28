@@ -97,6 +97,7 @@ func RecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<
 	defer func() { _ = conn.Close() }()
 	// 写数据
 	info := ServerTimestampsMap[aeadID]
+	_ = conn.SetDeadline(time.Now().Add(3 * time.Second))
 	info.RealT1 = time.Now()
 	_, err = conn.Write(req)
 	if err != nil {
@@ -105,7 +106,6 @@ func RecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<
 	}
 	// 接收响应
 	buf := make([]byte, 1024)
-	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
 	_, _, err = conn.ReadFromUDP(buf)
 	if err != nil {
 		// 检查是否是超时错误
@@ -116,8 +116,7 @@ func RecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<
 	}
 	// 记录时间戳
 	info.T4 = time.Now()
-	origin, receive, transmit := buf[24:32], buf[32:40], buf[40:48]
-	info.T1 = utils.ParseTimestamp(origin)
-	info.T2 = utils.ParseTimestamp(receive)
-	info.T3 = utils.ParseTimestamp(transmit)
+	info.T1 = utils.ParseTimestamp(buf[24:32])
+	info.T2 = utils.ParseTimestamp(buf[32:40])
+	info.T3 = utils.ParseTimestamp(buf[40:48])
 }
