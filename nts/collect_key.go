@@ -36,7 +36,7 @@ func CollectKeys(path string) error {
 
 		// 执行探测并解析
 		ip := line[:i]
-		payload, err := DialNTSKE(ip, "", 0x0F)
+		payload, err := DialNTSKE(ip, "", 0x11)
 		if err != nil {
 			// 检查是否是超时错误
 			errStr := err.Error()
@@ -59,8 +59,7 @@ func CollectKeys(path string) error {
 			parser.TheHost = ip
 		}
 		_, err = outputFile.WriteString(parser.TheHost + ":" + parser.ThePort + " ")
-		parser.TheHost = ""
-		parser.ThePort = "123"
+		parser.TheHost, parser.ThePort = "", "123"
 		if err != nil {
 			return err
 		}

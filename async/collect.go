@@ -52,7 +52,7 @@ func readNetworkNTP(ctx context.Context, cidr string, conn *net.UDPConn, doneCh 
 			if n < parser.HeaderLength {
 				payload.Err = errors.New(fmt.Sprintf("header length %d less than 48", n))
 			} else {
-				payload.SendTime = utils.ConvertTimestamp(buf[24:32])
+				payload.SendTime = utils.ParseTimestamp(buf[24:32])
 			}
 			dataCh <- payload
 		}

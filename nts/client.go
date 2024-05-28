@@ -14,7 +14,6 @@ const (
 	aesSivCmac256   = 0x0F
 	alpnID          = "ntske/1"
 	exportLabel     = "EXPORTER-network-time-security"
-	keyLength       = 32
 	configPath      = "../resources/"
 	timeoutKey      = "nts.dial_timeout"
 	haltTimeKey     = "nts.detect.halt_time"
@@ -82,7 +81,7 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 		res.CertDomain = certs[0].Subject.CommonName
 	}
 
-	if aeadID > 0x00 && aeadID <= 0x21 {
+	if aeadID < 0x01 || aeadID > 0x21 {
 		aeadID = aesSivCmac256
 	}
 	reqBytes[11] = aeadID
@@ -99,6 +98,12 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 
 	ctx := make([]byte, 4)
 	ctx[3] = aeadID
+	keyLength := 32
+	if aeadID == 0x10 {
+		keyLength = 48
+	} else if aeadID == 0x11 {
+		keyLength = 64
+	}
 	res.C2SKey, err = state.ExportKeyingMaterial(exportLabel, append(ctx, 0x00), keyLength)
 	if err != nil {
 		return nil, fmt.Errorf("export C2S key failed: %v", err)

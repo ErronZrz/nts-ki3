@@ -157,10 +157,10 @@ func CalculateDelay(timestamp []byte, another time.Time) time.Duration {
 }
 
 func FormatTimestamp(timestamp []byte) string {
-	return ConvertTimestamp(timestamp).Format(preciseFormat)
+	return ParseTimestamp(timestamp).Format(preciseFormat)
 }
 
-func ConvertTimestamp(timestamp []byte) time.Time {
+func ParseTimestamp(timestamp []byte) time.Time {
 	intPart := binary.BigEndian.Uint32(timestamp[:4])
 	fracPart := binary.BigEndian.Uint32(timestamp[4:])
 	intTime := startingPoint.Add(time.Duration(intPart) * time.Second)

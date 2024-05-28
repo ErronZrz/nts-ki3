@@ -26,6 +26,7 @@ var (
 		0x80, 0x01, 0x00, 0x02, 0x00, 0x00, 0x80, 0x04, 0x00, 0x02, 0x00, 0x0F, 0x80, 0x00, 0x00, 0x00,
 	}
 	FirstCookie []byte
+	CookieMap   map[byte][]byte
 	TheHost     string
 	ThePort     = "123"
 )
@@ -251,6 +252,16 @@ func printCookie(r *record, buf *bytes.Buffer) error {
 	if FirstCookie == nil {
 		FirstCookie = r.body
 	}
+
+	// 为计算 offset 添加 Cookie 记录
+	if r.bodyLen < 120 {
+		CookieMap[0x0F] = r.body
+	} else if r.bodyLen < 150 {
+		CookieMap[0x10] = r.body
+	} else {
+		CookieMap[0x11] = r.body
+	}
+
 	buf.WriteString("Cookie = 0x")
 	for _, b := range r.body[:16] {
 		buf.WriteString(fmt.Sprintf("%02X", b))
