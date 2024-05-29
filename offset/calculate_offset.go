@@ -38,7 +38,11 @@ func CalculateOffsets(path string) error {
 		}
 	}()
 
+	var num, finished int
+
 	for scanner.Scan() {
+		num++
+		fmt.Printf("%d (%d)\n", num, finished)
 		line := scanner.Text()
 		ip := strings.Split(line, "\t")[0]
 
@@ -73,6 +77,7 @@ func CalculateOffsets(path string) error {
 		if err != nil {
 			return err
 		}
+		finished++
 	}
 
 	return writer.Flush()

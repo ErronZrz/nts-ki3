@@ -5,7 +5,6 @@ import (
 	"active/parser"
 	"active/utils"
 	"errors"
-	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -42,9 +41,7 @@ func RecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<
 	if err != nil {
 		// 检查是否是超时错误
 		errStr := err.Error()
-		if strings.Contains(errStr, "i/o timeout") || strings.Contains(errStr, "deadline exceeded") {
-			fmt.Println(ip + " " + errStr)
-		} else {
+		if !strings.Contains(errStr, "i/o timeout") && !strings.Contains(errStr, "deadline exceeded") {
 			errCh <- err
 		}
 		return
@@ -62,7 +59,9 @@ func RecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<
 		return
 	}
 	// 如果没有 Cookie 说明不支持该算法，直接结束
+	parser.MuCookie.RLock()
 	cookie := parser.CookieMap[aeadID]
+	parser.MuCookie.RUnlock()
 	if cookie == nil {
 		return
 	}

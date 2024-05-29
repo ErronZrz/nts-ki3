@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 )
 
 const (
@@ -29,6 +30,7 @@ var (
 	CookieMap   map[byte][]byte
 	TheHost     string
 	ThePort     = "123"
+	MuCookie    sync.RWMutex
 )
 
 type Response struct {
@@ -254,6 +256,7 @@ func printCookie(r *record, buf *bytes.Buffer) error {
 	}
 
 	// 为计算 offset 添加 Cookie 记录
+	MuCookie.Lock()
 	if r.bodyLen < 120 {
 		CookieMap[0x0F] = r.body
 	} else if r.bodyLen < 150 {
@@ -261,6 +264,7 @@ func printCookie(r *record, buf *bytes.Buffer) error {
 	} else {
 		CookieMap[0x11] = r.body
 	}
+	MuCookie.Unlock()
 
 	buf.WriteString("Cookie = 0x")
 	for _, b := range r.body[:16] {
