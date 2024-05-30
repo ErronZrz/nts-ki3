@@ -104,7 +104,10 @@ func main() {
 
 func detectAndWriteNTSServer(ip string, writer *bufio.Writer, mutex *sync.Mutex, limitChan chan struct{}) {
 	// 释放信号量
-	defer func() { <-limitChan }()
+	defer func() {
+		fmt.Println(ip)
+		<-limitChan
+	}()
 
 	// 进行探测
 	result, err := nts.DetectNTSServer(ip, "", timeout)
