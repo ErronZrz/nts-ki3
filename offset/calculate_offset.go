@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 )
 
 func CalculateOffsets(path string) error {
@@ -38,11 +37,7 @@ func CalculateOffsets(path string) error {
 		}
 	}()
 
-	var num, finished int
-
 	for scanner.Scan() {
-		num++
-		fmt.Printf("%d (%d)\n", num, finished)
 		line := scanner.Text()
 		ip := strings.Split(line, "\t")[0]
 
@@ -77,7 +72,6 @@ func CalculateOffsets(path string) error {
 		if err != nil {
 			return err
 		}
-		finished++
 	}
 
 	return writer.Flush()
@@ -88,19 +82,23 @@ func generateLine(ip string) string {
 	info2 := ServerTimestampsMap[0x0F]
 	info3 := ServerTimestampsMap[0x10]
 	info4 := ServerTimestampsMap[0x11]
-	offset1 := getOffset(info1.T1, info1.T2, info1.T3, info1.T4)
-	offset2 := getOffset(info2.T1, info2.T2, info2.T3, info2.T4)
-	offset3 := getOffset(info2.RealT1, info2.T2, info2.T3, info2.T4)
-	offset4 := getOffset(info3.T1, info3.T2, info3.T3, info3.T4)
-	offset5 := getOffset(info3.RealT1, info3.T2, info3.T3, info3.T4)
-	offset6 := getOffset(info4.T1, info4.T2, info4.T3, info4.T4)
-	offset7 := getOffset(info4.RealT1, info4.T2, info4.T3, info4.T4)
+	offset1 := getOffset(info1, false)
+	offset2 := getOffset(info2, false)
+	offset3 := getOffset(info2, true)
+	offset4 := getOffset(info3, false)
+	offset5 := getOffset(info3, true)
+	offset6 := getOffset(info4, false)
+	offset7 := getOffset(info4, true)
 	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		ip, offset1, offset2, offset3, offset4, offset5, offset6, offset7,
 	)
 }
 
-func getOffset(t1, t2, t3, t4 time.Time) string {
+func getOffset(info *ServerTimestamps, useReal bool) string {
+	t1, t2, t3, t4 := info.T1, info.T2, info.T3, info.T4
+	if useReal {
+		t1 = info.RealT1
+	}
 	if t1.IsZero() || t2.IsZero() || t3.IsZero() || t4.IsZero() {
 		return "-"
 	}

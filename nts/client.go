@@ -17,7 +17,7 @@ const (
 	configPath      = "../resources/"
 	timeoutKey      = "nts.dial_timeout"
 	haltTimeKey     = "nts.detect.halt_time"
-	defaultTimeout  = 3000
+	defaultTimeout  = 5000
 	defaultHaltTime = 500
 )
 

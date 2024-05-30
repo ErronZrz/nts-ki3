@@ -137,6 +137,41 @@ func ParseDetectInfo(data []byte, info *datastruct.DetectInfo) error {
 	return nil
 }
 
+func ParseOffsetInfo(data []byte, info *datastruct.OffsetServerInfo, aeadID byte) error {
+	records, err := retrieveRecords(data)
+	if err != nil {
+		return err
+	}
+	for _, r := range records {
+		switch r.rType {
+		// Cookie
+		case 5:
+			if r.bodyLen == 0 {
+				return errors.New("empty body in Cookie record")
+			}
+			info.Lock()
+			info.CookieMap[aeadID] = append(info.CookieMap[aeadID], r.body)
+			info.Unlock()
+		// NTPv4 Server
+		case 6:
+			if r.bodyLen == 0 {
+				return errors.New("empty body in NTPv4 Server record")
+			}
+			info.Server = string(r.body)
+		// NTPv4 Port
+		case 7:
+			if r.bodyLen != 2 {
+				return fmt.Errorf("unexpected body length in NTPv4 Port record: %d", r.bodyLen)
+			}
+			port := (int(r.body[0]) << 8) + int(r.body[1])
+			info.Port = strconv.Itoa(port)
+		default:
+			continue
+		}
+	}
+	return nil
+}
+
 func retrieveRecords(data []byte) ([]*record, error) {
 	n := len(data)
 	cur := 0
