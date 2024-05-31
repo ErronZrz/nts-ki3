@@ -14,6 +14,8 @@ type OffsetServerInfo struct {
 	sync.RWMutex
 	C2SKeyMap map[byte][]byte
 	CookieMap map[byte][][]byte
+	RightIP   bool
+	Expired   bool
 	Server    string
 	Port      string
 	T1        map[byte]time.Time

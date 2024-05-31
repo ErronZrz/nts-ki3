@@ -53,9 +53,6 @@ func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 	wg.Wait()
 
 	for ip, info := range datastruct.OffsetInfoMap {
-		if info.T1[0x0F].IsZero() {
-			continue
-		}
 		_, err = writer.WriteString(generateLine1(ip, info))
 		if err != nil {
 			return err
@@ -89,8 +86,19 @@ func CalculateIPOffset(ip string, wg *sync.WaitGroup, errCh chan<- error) {
 }
 
 func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-		ip,
+	var classStr string
+	addStr := func(b bool) {
+		if b {
+			classStr += "Y"
+		} else {
+			classStr += "N"
+		}
+	}
+	addStr(info.RightIP)
+	addStr(!info.Expired)
+	addStr(!info.T1[0x0F].IsZero())
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		ip, classStr,
 		getOffset1(info, 0x00, false),
 		getOffset1(info, 0x0F, false),
 		getOffset1(info, 0x0F, true),

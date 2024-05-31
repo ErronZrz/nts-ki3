@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"io"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -78,7 +79,10 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 
 	certs := state.PeerCertificates
 	if len(certs) > 0 {
-		res.CertDomain = certs[0].Subject.CommonName
+		cert := certs[0]
+		res.CertDomain = cert.Subject.CommonName
+		res.RightIP = checkDNS(res.CertDomain, host)
+		res.Expired = time.Now().After(cert.NotAfter)
 	}
 
 	if aeadID < 0x01 || aeadID > 0x21 {
@@ -116,4 +120,23 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 	res.Len = len(data)
 	res.RcvData = data
 	return res, nil
+}
+
+func checkDNS(domain, ip string) bool {
+	if strings.Contains(domain, "*") {
+		return true
+	}
+
+	ips, err := net.LookupIP(domain)
+	if err != nil {
+		return false
+	}
+
+	for _, resolvedIP := range ips {
+		if resolvedIP.String() == ip {
+			return true
+		}
+	}
+
+	return false
 }

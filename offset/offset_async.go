@@ -42,6 +42,8 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 		}
 		info.Lock()
 		info.C2SKeyMap[aeadID] = payload.C2SKey
+		info.RightIP = payload.RightIP
+		info.Expired = payload.Expired
 		info.Unlock()
 
 		// 解析 Cookie 等信息

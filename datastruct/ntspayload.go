@@ -16,6 +16,8 @@ type NTSPayload struct {
 	Port       int
 	CertDomain string
 	Secure     bool
+	RightIP    bool
+	Expired    bool
 	Err        error
 	Len        int
 	RcvData    []byte
