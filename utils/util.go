@@ -56,13 +56,13 @@ func init() {
 	viper.SetConfigName("properties")
 	err := viper.ReadInConfig()
 	if err != nil {
-		// fmt.Printf("error reading resource file: %v", err)
+		// fmt.Printf("error reading resource file: %v\n", err)
 		return
 	}
 	filePath := viper.GetString(dbPathKey)
 	buf, err := xdb.LoadContentFromFile(filePath)
 	if err != nil {
-		fmt.Printf("failed to load content: %v", err)
+		fmt.Printf("failed to load content: %v\n", err)
 	}
 	searcher, err = xdb.NewWithBuffer(buf)
 }
@@ -234,7 +234,7 @@ func PrintBytes(data []byte, rowLen int) string {
 func SplitCIDR(cidr string, parts int) []string {
 	pow, err := CidrPow(cidr)
 	if err != nil {
-		fmt.Printf("parse CIDR error: %v", err)
+		fmt.Printf("parse CIDR error: %v\n", err)
 	}
 
 	num := 1
@@ -248,7 +248,7 @@ func SplitCIDR(cidr string, parts int) []string {
 
 	ip, ipNet, err := net.ParseCIDR(cidr)
 	if err != nil {
-		fmt.Printf("parse CIDR error: %v", err)
+		fmt.Printf("parse CIDR error: %v\n", err)
 	}
 	b := ip.Mask(ipNet.Mask)
 	basic := uint32(b[0])<<24 | uint32(b[1])<<16 | uint32(b[2])<<8 | uint32(b[3])
@@ -286,14 +286,14 @@ func TranslateCountry(countries []string) []string {
 	data, err := json.Marshal(tr)
 	// fmt.Println(string(data))
 	if err != nil {
-		fmt.Printf("marshal error: %v", err)
+		fmt.Printf("marshal error: %v\n", err)
 		return nil
 	}
 
 	url := "https://api.interpreter.caiyunai.com/v1/translator"
 	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
 	if err != nil {
-		fmt.Printf("request error: %v", err)
+		fmt.Printf("request error: %v\n", err)
 		return nil
 	}
 
@@ -303,7 +303,7 @@ func TranslateCountry(countries []string) []string {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("request error: %v", err)
+		fmt.Printf("request error: %v\n", err)
 		return nil
 	}
 	defer func() { _ = res.Body.Close() }()
@@ -314,14 +314,14 @@ func TranslateCountry(countries []string) []string {
 
 	text, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Printf("read body error: %v", err)
+		fmt.Printf("read body error: %v\n", err)
 		return nil
 	}
 
 	var trRes transRes
 	err = json.Unmarshal(text, &trRes)
 	if err != nil {
-		fmt.Printf("unmarshal error: %v", err)
+		fmt.Printf("unmarshal error: %v\n", err)
 		return nil
 	}
 

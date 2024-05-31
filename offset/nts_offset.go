@@ -5,6 +5,7 @@ import (
 	"active/parser"
 	"active/utils"
 	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -49,7 +50,7 @@ func RecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<
 	// 记录 C2S 密钥
 	c2sKey := payload.C2SKey
 	if payload.Len == 0 {
-		errCh <- errors.New("NTS-KE payload is empty")
+		errCh <- errors.New(fmt.Sprintf("%s: NTS-KE payload is empty", ip))
 		return
 	}
 	// 解析并记录 Cookie

@@ -6,8 +6,8 @@ import (
 	"active/parser"
 	"active/utils"
 	"errors"
+	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 )
@@ -33,15 +33,11 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 
 		payload, err := nts.DialNTSKE(ip, "", aeadID)
 		if err != nil {
-			// 检查是否是超时错误
-			errStr := err.Error()
-			if !strings.Contains(errStr, "i/o timeout") && !strings.Contains(errStr, "deadline exceeded") {
-				errCh <- err
-			}
+			errCh <- err
 			return
 		}
 		if payload.Len == 0 {
-			errCh <- errors.New("NTS-KE payload is empty")
+			errCh <- errors.New(fmt.Sprintf("%s: NTS-KE payload is empty", ip))
 			return
 		}
 		info.Lock()
@@ -68,10 +64,7 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 	serverAddr := info.Server + ":" + info.Port
 	udpAddr, err := net.ResolveUDPAddr("udp", serverAddr)
 	if err != nil {
-		// 检查是否是地址解析错误
-		if !strings.Contains(err.Error(), "no such host") {
-			errCh <- err
-		}
+		errCh <- err
 		return
 	}
 	// 生成请求数据
@@ -105,10 +98,7 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 	buf := make([]byte, 1024)
 	_, _, err = conn.ReadFromUDP(buf)
 	if err != nil {
-		// 检查是否是超时错误
-		if !strings.Contains(err.Error(), "i/o timeout") {
-			errCh <- err
-		}
+		errCh <- err
 		return
 	}
 	// 记录时间戳
@@ -125,10 +115,7 @@ func AsyncRecordNTPTimestamps(info *datastruct.OffsetServerInfo, errCh chan<- er
 	serverAddr := info.Server + ":" + info.Port
 	udpAddr, err := net.ResolveUDPAddr("udp", serverAddr)
 	if err != nil {
-		// 检查是否是地址解析错误
-		if !strings.Contains(err.Error(), "no such host") {
-			errCh <- err
-		}
+		errCh <- err
 		return
 	}
 	// 建立连接
@@ -149,10 +136,7 @@ func AsyncRecordNTPTimestamps(info *datastruct.OffsetServerInfo, errCh chan<- er
 	data := make([]byte, 1024)
 	_, _, err = conn.ReadFromUDP(data)
 	if err != nil {
-		// 检查是否是超时错误
-		if !strings.Contains(err.Error(), "i/o timeout") {
-			errCh <- err
-		}
+		errCh <- err
 		return
 	}
 	// 记录时间戳

@@ -47,7 +47,7 @@ func CollectKeys(path string) error {
 			return err
 		}
 		if payload.Len == 0 {
-			return errors.New("NTS-KE payload is empty")
+			return errors.New(fmt.Sprintf("%s: NTS-KE payload is empty", ip))
 		}
 		_, err = parser.ParseNTSResponse(payload.RcvData)
 		if err != nil {

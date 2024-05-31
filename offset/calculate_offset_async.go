@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func CalculateOffsetsAsync(inPath, outPath string) error {
+func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 	// 创建文件
 	file, err := os.Open(inPath)
 	if err != nil {
@@ -18,7 +18,7 @@ func CalculateOffsetsAsync(inPath, outPath string) error {
 	}
 
 	// 创建结果文件
-	resultFile, err := os.Create(outPath)
+	resultFile, err := os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,9 @@ func CalculateOffsetsAsync(inPath, outPath string) error {
 
 	go func() {
 		for err := range errCh {
-			fmt.Println(err)
+			if !errContains(err, "i/o timeout", "deadline exceeded", "failed to respond", "no such host") {
+				fmt.Println(err)
+			}
 		}
 	}()
 
@@ -45,8 +47,7 @@ func CalculateOffsetsAsync(inPath, outPath string) error {
 		ip := strings.Split(scanner.Text(), "\t")[0]
 		wg.Add(1)
 		go CalculateIPOffset(ip, wg, errCh)
-		// 等待一秒
-		time.Sleep(time.Second)
+		time.Sleep(time.Duration(interval) * time.Millisecond)
 	}
 
 	wg.Wait()
@@ -66,9 +67,13 @@ func CalculateOffsetsAsync(inPath, outPath string) error {
 
 func CalculateIPOffset(ip string, wg *sync.WaitGroup, errCh chan<- error) {
 	defer func() { wg.Done() }()
-	info := datastruct.NewOffsetServerInfo(ip)
+
 	datastruct.OffsetMapMu.Lock()
-	datastruct.OffsetInfoMap[ip] = info
+	info, ok := datastruct.OffsetInfoMap[ip]
+	if !ok {
+		info = datastruct.NewOffsetServerInfo(ip)
+		datastruct.OffsetInfoMap[ip] = info
+	}
 	datastruct.OffsetMapMu.Unlock()
 
 	ipWg := new(sync.WaitGroup)
@@ -106,4 +111,14 @@ func getOffset1(info *datastruct.OffsetServerInfo, aeadID byte, useReal bool) st
 	}
 	offset := (t2.Sub(t1.UTC()) + t3.Sub(t4.UTC())) / 2
 	return fmt.Sprintf("%.3f", float64(offset.Nanoseconds()/1000)/1000)
+}
+
+func errContains(err error, substrList ...string) bool {
+	errStr := err.Error()
+	for _, substr := range substrList {
+		if strings.Contains(errStr, substr) {
+			return true
+		}
+	}
+	return false
 }

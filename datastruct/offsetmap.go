@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	OffsetInfoMap map[string]*OffsetServerInfo
+	OffsetInfoMap = make(map[string]*OffsetServerInfo)
 	OffsetMapMu   sync.RWMutex
 )
 
