@@ -96,9 +96,11 @@ func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
 	}
 	addStr(info.RightIP)
 	addStr(!info.Expired)
+	addStr(len(info.C2SKeyMap[0x0F]) > 0)
+	addStr(len(info.CookieMap[0x0F]) > 0)
 	addStr(!info.T1[0x0F].IsZero())
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-		ip, classStr,
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		ip, info.CommonName, classStr,
 		getOffset1(info, 0x00, false),
 		getOffset1(info, 0x0F, false),
 		getOffset1(info, 0x0F, true),

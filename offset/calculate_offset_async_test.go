@@ -5,8 +5,8 @@ import (
 )
 
 func TestCalculateIPOffset(t *testing.T) {
-	input := "C:\\Corner\\TMP\\NTPData\\0530-all-1.txt"
-	output := "C:\\Corner\\TMP\\NTPData\\0530-all-1_offset.txt"
+	input := "D:\\Desktop\\TMP\\Ntages\\Data\\0606-500-1.txt"
+	output := "D:\\Desktop\\TMP\\Ntages\\Data\\0606-500-1_offset-3.txt"
 	err := CalculateOffsetsAsync(input, output, 1000)
 	if err != nil {
 		t.Error(err)

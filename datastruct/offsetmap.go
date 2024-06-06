@@ -12,17 +12,18 @@ var (
 
 type OffsetServerInfo struct {
 	sync.RWMutex
-	C2SKeyMap map[byte][]byte
-	CookieMap map[byte][][]byte
-	RightIP   bool
-	Expired   bool
-	Server    string
-	Port      string
-	T1        map[byte]time.Time
-	T2        map[byte]time.Time
-	T3        map[byte]time.Time
-	T4        map[byte]time.Time
-	RealT1    map[byte]time.Time
+	C2SKeyMap  map[byte][]byte
+	CookieMap  map[byte][][]byte
+	RightIP    bool
+	Expired    bool
+	CommonName string
+	Server     string
+	Port       string
+	T1         map[byte]time.Time
+	T2         map[byte]time.Time
+	T3         map[byte]time.Time
+	T4         map[byte]time.Time
+	RealT1     map[byte]time.Time
 }
 
 func NewOffsetServerInfo(ip string) *OffsetServerInfo {
