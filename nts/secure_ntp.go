@@ -70,7 +70,6 @@ func addAuthEF(buf *bytes.Buffer, c2s []byte) error {
 		return err
 	}
 
-	// fmt.Println(len(buf.Bytes()))
 	cipherText := algorithm.Seal(nil, nonce, nil, buf.Bytes())
 
 	nonceBuf := new(bytes.Buffer)

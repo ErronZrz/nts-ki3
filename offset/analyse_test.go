@@ -17,3 +17,11 @@ func TestAnalyseDomain(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestAnalyseOffset(t *testing.T) {
+	path := "C:\\Corner\\TMP\\NTPData\\0606\\offset_100.txt"
+	err := AnalyseOffset(path)
+	if err != nil {
+		t.Error(err)
+	}
+}
