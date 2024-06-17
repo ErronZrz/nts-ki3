@@ -1,6 +1,7 @@
 package main
 
 import (
+	"active/nts"
 	"active/offset"
 	"flag"
 	"fmt"
@@ -15,6 +16,7 @@ func main() {
 	flag.StringVar(&outputPath, "output", "", "Output text file path")
 	flag.IntVar(&interval, "interval", 1000, "Interval between tasks in milliseconds")
 	flag.IntVar(&roundInterval, "roundInterval", 60, "Interval between rounds in seconds")
+	flag.IntVar(&nts.PlaceholderNum, "placeholders", 0, "Number of cookie placeholder EFs")
 	flag.Parse()
 
 	for i := 0; i < round; i++ {

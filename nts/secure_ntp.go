@@ -8,6 +8,10 @@ import (
 	"github.com/secure-io/siv-go"
 )
 
+var (
+	PlaceholderNum int
+)
+
 func GenerateSecureNTPRequest(c2s, cookie []byte) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	err := addHeader(buf)
@@ -21,6 +25,15 @@ func GenerateSecureNTPRequest(c2s, cookie []byte) ([]byte, error) {
 	err = addCookieEF(buf, cookie)
 	if err != nil {
 		return nil, err
+	}
+	if PlaceholderNum > 0 && PlaceholderNum < 8 {
+		cookieSize := len(cookie)
+		for i := 0; i < PlaceholderNum; i++ {
+			err = addCookiePlaceholderEF(buf, cookieSize)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	err = addAuthEF(buf, c2s)
 	if err != nil {
@@ -55,6 +68,16 @@ func addCookieEF(buf *bytes.Buffer, cookie []byte) error {
 		return err
 	}
 	_, err = buf.Write(cookie)
+	return err
+}
+
+func addCookiePlaceholderEF(buf *bytes.Buffer, cookieSize int) error {
+	_, err := buf.Write([]byte{0x03, 0x04, 0x00, byte(cookieSize) + 4})
+	if err != nil {
+		return err
+	}
+	emptyCookie := make([]byte, cookieSize)
+	_, err = buf.Write(emptyCookie)
 	return err
 }
 
