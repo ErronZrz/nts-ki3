@@ -91,6 +91,10 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 	info.Lock()
 	info.RealT1[aeadID] = time.Now()
 	info.CookieMap[aeadID] = info.CookieMap[aeadID][1:]
+	if len(info.CookieMap[aeadID]) == 0 {
+		// 进行标记以便重新握手
+		info.C2SKeyMap[aeadID] = nil
+	}
 	info.Unlock()
 	_, err = conn.Write(req)
 	if err != nil {

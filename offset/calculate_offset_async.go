@@ -99,7 +99,7 @@ func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
 	addStr(len(info.C2SKeyMap[0x0F]) > 0)
 	addStr(len(info.CookieMap[0x0F]) > 0)
 	addStr(!info.T1[0x0F].IsZero())
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+	line := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		ip, info.CommonName, classStr,
 		getOffset1(info, 0x00, false),
 		getOffset1(info, 0x0F, false),
@@ -109,6 +109,8 @@ func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
 		getOffset1(info, 0x11, false),
 		getOffset1(info, 0x11, true),
 	)
+	info.ClearTimeStamps()
+	return line
 }
 
 func getOffset1(info *datastruct.OffsetServerInfo, aeadID byte, useReal bool) string {
@@ -116,7 +118,7 @@ func getOffset1(info *datastruct.OffsetServerInfo, aeadID byte, useReal bool) st
 	if useReal {
 		t1 = info.RealT1[aeadID]
 	}
-	if t1.IsZero() || t2.IsZero() || t3.IsZero() || t4.IsZero() {
+	if t2.IsZero() || t1.IsZero() || t3.IsZero() || t4.IsZero() {
 		return "-"
 	}
 	offset := (t2.Sub(t1.UTC()) + t3.Sub(t4.UTC())) / 2

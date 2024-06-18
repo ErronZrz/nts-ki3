@@ -39,3 +39,12 @@ func NewOffsetServerInfo(ip string) *OffsetServerInfo {
 		RealT1:    make(map[byte]time.Time),
 	}
 }
+
+func (info *OffsetServerInfo) ClearTimeStamps() {
+	info.Lock()
+	info.T2[0x00] = time.Time{}
+	info.T2[0x0F] = time.Time{}
+	info.T2[0x10] = time.Time{}
+	info.T2[0x11] = time.Time{}
+	info.Unlock()
+}
