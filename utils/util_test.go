@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -54,4 +57,21 @@ func TestTranslateCountry(t *testing.T) {
 	countries := []string{"中国", "德国", "美国", "加拿大"}
 	result := TranslateCountry(countries)
 	fmt.Println(result)
+}
+
+func TestRegionOfFile(t *testing.T) {
+	path := "D:\\Desktop\\TMP\\Ntages\\Data\\2024-06-09_ntske_all.txt"
+	file, err := os.Open(path)
+	if err != nil {
+		t.Error(err)
+	}
+	scanner := bufio.NewScanner(file)
+	m := make(map[string]int)
+	for scanner.Scan() {
+		ip := strings.Split(scanner.Text(), "\t")[0]
+		m[RegionOf(ip)]++
+	}
+	for k, v := range m {
+		fmt.Printf("%s: %d\n", k, v)
+	}
 }
