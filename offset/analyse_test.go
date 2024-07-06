@@ -28,9 +28,13 @@ func TestAnalyseOffset(t *testing.T) {
 }
 
 func TestOffsetValues(t *testing.T) {
-	path := "D:\\Desktop\\TMP\\Ntages\\Ntage10\\offset_100.txt"
-	dstPath := "D:\\Desktop\\TMP\\Ntages\\Ntage10\\offset_100_512S.txt"
-	err := ExtractOffsetValues(path, dstPath, 2, 8)
+	path := "C:\\Corner\\TMP\\毕设\\NTP\\Ntage11\\0618-数据\\0618-all_offset-7"
+	err := ExtractOffsetValues(path+".txt", path+"-256C.txt", 4, 5)
+	err = ExtractOffsetValues(path+".txt", path+"-384C.txt", 6, 7)
+	err = ExtractOffsetValues(path+".txt", path+"-512C.txt", 8, 9)
+	err = ExtractOffsetValues(path+".txt", path+"-256S.txt", 3, 5)
+	err = ExtractOffsetValues(path+".txt", path+"-384S.txt", 3, 7)
+	err = ExtractOffsetValues(path+".txt", path+"-512S.txt", 3, 9)
 	if err != nil {
 		t.Error(err)
 	}

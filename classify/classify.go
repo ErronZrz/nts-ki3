@@ -1,15 +1,17 @@
 package classify
 
 import (
+	"bytes"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
 
-func FetchNTPPackets(filePath string, limit int) ([][]byte, error) {
-	var packets [][]byte
+func FetchNTPPackets(filePath string, limit int) (map[string][][]byte, error) {
+	var packets = make(map[string][][]byte) // 以源 IP 地址为键的 map
+	var count int
 
-	// 打开.pcap文件
+	// 打开 .pcap 文件
 	handle, err := pcap.OpenOffline(filePath)
 	if err != nil {
 		return nil, err
@@ -30,14 +32,49 @@ func FetchNTPPackets(filePath string, limit int) ([][]byte, error) {
 			continue
 		}
 
-		// 此时 udp.Payload 即为 NTP 的数据部分
-		packets = append(packets, udp.Payload)
-		if limit > 0 && len(packets) >= limit {
+		// 提取源 IP 地址
+		ipLayer := packet.Layer(layers.LayerTypeIPv4)
+		if ipLayer == nil {
+			continue
+		}
+		ip, _ := ipLayer.(*layers.IPv4)
+
+		srcIP := ip.SrcIP.String() // 获取源 IP 地址的字符串表示
+
+		// 将 UDP 数据添加到对应 IP 的列表中
+		packets[srcIP] = append(packets[srcIP], udp.Payload)
+		count++
+
+		if limit > 0 && count >= limit {
 			break
 		}
 	}
 
 	return packets, nil
+}
+
+func GetVersion(data []byte) string {
+	prefix := []byte("version=")
+	start := bytes.Index(data, prefix)
+	if start == -1 {
+		return "" // 如果找不到"version="，直接返回空字符串
+	}
+
+	// 查找从"version="之后的第一个引号开始的位置
+	startQuote := start + len(prefix)
+	if startQuote >= len(data) {
+		return "" // 检查边界，确保不会越界
+	}
+
+	// 从"version="后的位置开始，找到下一个引号
+	endQuote := bytes.IndexByte(data[startQuote+1:], '"')
+	if endQuote == -1 {
+		return "" // 如果找不到闭合的引号，返回空字符串
+	}
+
+	// 提取完整的"version="字符串
+	version := data[start : startQuote+endQuote+2]
+	return string(version)
 }
 
 func ClassifyNTPRequest(p *NTPPacket) string {

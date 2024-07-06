@@ -7,7 +7,7 @@ import (
 )
 
 func TestDialNTSKE(t *testing.T) {
-	payload, err := DialNTSKE("194.58.207.74", "sth2.nts.netnod.se", 0x0F)
+	payload, err := DialNTSKE("192.168.187.128", "nts.erronliu.top", 0x0F)
 	if err != nil {
 		t.Error(err)
 		return

@@ -134,7 +134,7 @@ func ExtractOffsetValues(path, dstPath string, col1, col2 int) error {
 			return err
 		}
 		sub := (f1 - f2) * 2
-		if sub > -10000 && sub < 10000 {
+		if sub > -100 && sub < 100 {
 			count++
 			sum += sub
 		}

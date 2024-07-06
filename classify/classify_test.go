@@ -1,15 +1,48 @@
 package classify
 
 import (
-	"active/parser"
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 )
 
+func TestGetVersion(t *testing.T) {
+	filePath := "C:\\Corner\\TMP\\BisheData\\2024-06-29_mode6_0.pcap"
+	dstFile, err := os.Create("C:\\Corner\\TMP\\BisheData\\0629-1.txt")
+	if err != nil {
+		t.Error(err)
+	}
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(dstFile)
+	writer := bufio.NewWriter(dstFile)
+	packets, err := FetchNTPPackets(filePath, -1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var total int
+
+	for ip, packetList := range packets {
+		total += len(packetList)
+		for _, packet := range packetList {
+			s := GetVersion(packet)
+			if s == "" {
+				s = "no version"
+			}
+			_, _ = writer.WriteString(ip + "\t" + s + "\r\n")
+		}
+	}
+	_ = writer.Flush()
+
+	fmt.Println(total)
+}
+
 func TestClassifyNTPRequest(t *testing.T) {
-	filePath := "C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_5.pcap"
+	filePath := "C:\\Corner\\TMP\\BisheData\\2024-06-29_mode6_0.pcap"
 	packets, err := FetchNTPPackets(filePath, -1)
 	if err != nil {
 		t.Error(err)
@@ -17,41 +50,33 @@ func TestClassifyNTPRequest(t *testing.T) {
 	}
 	result := make(map[string]int)
 
-	recordPath := "C:\\Corner\\TMP\\BisheData\\0405-5.txt"
-	recordFile, err := os.Create(recordPath)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(recordFile)
+	var tooShort int
+	var total int
 
-	writer := bufio.NewWriter(recordFile)
-	limit := 1000
-	var otherCount int
-
-	for _, packet := range packets {
-		p, err := ParseNTPPacket(packet)
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-		str := ClassifyNTPRequest(p)
-		if otherCount < limit && str == "other" {
-			otherCount++
-			for i := 0; i < parser.HeaderLength; i++ {
-				_, _ = writer.WriteString(fmt.Sprintf("%02X", packet[i]))
-				if i%16 == 15 {
-					_, _ = writer.WriteString("\n")
+	for _, packetList := range packets {
+		total += len(packetList)
+		for _, packet := range packetList {
+			s := GetVersion(packet)
+			isNtpd := strings.Contains(s, "ntpd")
+			p, err := ParseNTPPacket(packet)
+			if err != nil {
+				tooShort++
+				continue
+			}
+			str := ClassifyNTPRequest(p)
+			if str == "ntpd" {
+				if isNtpd {
+					str = "ntpdT"
 				} else {
-					_, _ = writer.WriteString(" ")
+					str = "ntpdF"
 				}
 			}
-			_, _ = writer.WriteString("\n")
+			result[str]++
 		}
-		result[str]++
 	}
+
+	fmt.Println(total)
+	fmt.Println(tooShort)
 
 	var count int
 	for _, v := range result {
@@ -59,4 +84,78 @@ func TestClassifyNTPRequest(t *testing.T) {
 	}
 	fmt.Println(count)
 	fmt.Println(result)
+}
+
+func TestCross(t *testing.T) {
+	filePath := "C:\\Corner\\TMP\\BisheData\\0629-1.txt"
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(file)
+
+	typeMap := make(map[string]int)
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		ip := strings.Split(line, "\t")[0]
+		if strings.Contains(line, "  20") {
+			typeMap[ip] = 1
+		} else if strings.Contains(line, "ntpd") {
+			typeMap[ip] = 2
+		} else {
+			typeMap[ip] = 0
+		}
+	}
+
+	cross("C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_0.pcap", typeMap)
+	cross("C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_1.pcap", typeMap)
+	cross("C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_2.pcap", typeMap)
+	cross("C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_3.pcap", typeMap)
+	cross("C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_4.pcap", typeMap)
+	cross("C:\\Corner\\TMP\\BisheData\\2024-01-27_ntps_passive_v4_5.pcap", typeMap)
+}
+
+func cross(pcapPath string, typeMap map[string]int) {
+	packets, err := FetchNTPPackets(pcapPath, -1)
+	if err != nil {
+		return
+	}
+
+	var total int
+	var tooShort int
+	var not3 int
+	res := make(map[string]int)
+	for ip, packetList := range packets {
+		total += len(packetList)
+		flag, ok := typeMap[ip]
+		for _, packet := range packetList {
+			p, err := ParseNTPPacket(packet)
+			if err != nil {
+				tooShort++
+				continue
+			} else if p.Mode != 3 {
+				not3++
+				continue
+			}
+			s := ClassifyNTPRequest(p)
+			if ok {
+				s = fmt.Sprintf("%s %d", s, flag)
+			}
+			res[s]++
+		}
+	}
+	fmt.Println(total)
+	fmt.Println(not3)
+	fmt.Println(tooShort)
+	var count int
+	for _, v := range res {
+		count += v
+	}
+	fmt.Println(count)
+	fmt.Println(res)
 }
