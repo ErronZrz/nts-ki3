@@ -202,7 +202,7 @@ func retrieveRecords(data []byte) ([]*record, error) {
 		}
 		endPos := cur + int(bodyLen)
 		if endPos > n {
-			errStr := fmt.Sprintf("an incomplete record exists at pos %d with length %d with total length %d", cur, bodyLen, n)
+			errStr := fmt.Sprintf("an incomplete record exists at pos %d with length %d (total length %d)", cur, bodyLen, n)
 			return nil, errors.New(errStr)
 		}
 		next.bodyLen = bodyLen

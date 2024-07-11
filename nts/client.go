@@ -80,9 +80,15 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 	certs := state.PeerCertificates
 	if len(certs) > 0 {
 		cert := certs[0]
-		res.CertDomain = cert.Subject.CommonName
+		commonName := cert.Subject.CommonName
+		res.CertDomain = commonName
 		res.RightIP = checkDNS(res.CertDomain, host)
 		res.Expired = time.Now().After(cert.NotAfter)
+		res.SelfSigned = cert.Issuer.CommonName == commonName
+		res.NotBefore = cert.NotBefore
+		res.NotAfter = cert.NotAfter
+		res.Organization = strings.Join(cert.Issuer.Organization, ";")
+		res.Issuer = cert.Issuer.CommonName
 	}
 
 	if aeadID < 0x01 || aeadID > 0x21 {

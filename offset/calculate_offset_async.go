@@ -46,7 +46,7 @@ func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 	for scanner.Scan() {
 		ip := strings.Split(scanner.Text(), "\t")[0]
 		wg.Add(1)
-		go CalculateIPOffset(ip, wg, errCh)
+		go CalculateIPOffset(ip, wg, errCh, 3)
 		time.Sleep(time.Duration(interval) * time.Millisecond)
 	}
 
@@ -62,7 +62,41 @@ func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 	return writer.Flush()
 }
 
-func CalculateIPOffset(ip string, wg *sync.WaitGroup, errCh chan<- error) {
+func NTSKEDetectorWithFlags(path string, interval int) error {
+	// 创建文件
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = file.Close()
+	}()
+
+	scanner := bufio.NewScanner(file)
+	wg := new(sync.WaitGroup)
+	errCh := make(chan error, 16)
+
+	go func() {
+		for err := range errCh {
+			if !errContains(err, "i/o timeout", "deadline exceeded", "failed to respond", "no such host") {
+				fmt.Println(err)
+			}
+		}
+	}()
+
+	for scanner.Scan() {
+		ip := strings.Split(scanner.Text(), "\t")[0]
+		wg.Add(1)
+		go CalculateIPOffset(ip, wg, errCh, 1)
+		time.Sleep(time.Duration(interval) * time.Millisecond)
+	}
+
+	wg.Wait()
+	return nil
+}
+
+func CalculateIPOffset(ip string, wg *sync.WaitGroup, errCh chan<- error, aeadNum int) {
 	defer func() { wg.Done() }()
 
 	datastruct.OffsetMapMu.Lock()
@@ -76,13 +110,15 @@ func CalculateIPOffset(ip string, wg *sync.WaitGroup, errCh chan<- error) {
 	ipWg := new(sync.WaitGroup)
 	ipWg.Add(3)
 
-	go AsyncRecordNTSTimestamps(ip, 0x0F, ipWg, errCh)
-	go AsyncRecordNTSTimestamps(ip, 0x10, ipWg, errCh)
-	go AsyncRecordNTSTimestamps(ip, 0x11, ipWg, errCh)
+	go AsyncRecordNTSTimestamps(ip, 0x0F, ipWg, errCh, false)
+	go AsyncRecordNTSTimestamps(ip, 0x10, ipWg, errCh, aeadNum < 2)
+	go AsyncRecordNTSTimestamps(ip, 0x11, ipWg, errCh, aeadNum < 3)
 
 	ipWg.Wait()
 
-	AsyncRecordNTPTimestamps(info, errCh)
+	if aeadNum > 1 {
+		AsyncRecordNTPTimestamps(info, errCh)
+	}
 }
 
 func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
@@ -111,6 +147,54 @@ func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
 	)
 	info.ClearTimeStamps()
 	return line
+}
+
+func GenerateLine2(ip string, info *datastruct.OffsetServerInfo) string {
+	cookieMap := info.CookieMap
+	if len(cookieMap[0x0F]) == 0 {
+		return ""
+	}
+
+	server := info.Server
+	if server == ip {
+		server = "Default"
+	}
+
+	aeadStr := fmt.Sprintf("SIV_CMAC_256(%d)", len(cookieMap[0x0F][0]))
+	if len(cookieMap[0x10]) > 0 {
+		aeadStr += fmt.Sprintf(",SIV_CMAC_384(%d)", len(cookieMap[0x10][0]))
+	}
+	if len(cookieMap[0x11]) > 0 {
+		aeadStr += fmt.Sprintf(",SIV_CMAC_512(%d)", len(cookieMap[0x11][0]))
+	}
+
+	var flagStr string
+	addStr := func(b bool) {
+		if b {
+			flagStr += "Y"
+		} else {
+			flagStr += "N"
+		}
+	}
+	addStr(info.RightIP)
+	addStr(!info.Expired)
+	addStr(!info.SelfSigned)
+	addStr(!info.T1[0x0F].IsZero())
+	dateFormat := "2006-01-02 15:04:05"
+
+	strList := []string{
+		ip,
+		info.CommonName,
+		server,
+		info.Port,
+		aeadStr,
+		flagStr,
+		info.NotBefore.Format(dateFormat),
+		info.NotAfter.Format(dateFormat),
+		info.Organization,
+		info.Issuer,
+	}
+	return strings.Join(strList, "\t") + "\n"
 }
 
 func getOffset1(info *datastruct.OffsetServerInfo, aeadID byte, useReal bool) string {

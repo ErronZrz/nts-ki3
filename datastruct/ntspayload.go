@@ -12,17 +12,22 @@ const (
 )
 
 type NTSPayload struct {
-	Host       string
-	Port       int
-	CertDomain string
-	Secure     bool
-	RightIP    bool
-	Expired    bool
-	Err        error
-	Len        int
-	RcvData    []byte
-	C2SKey     []byte
-	S2CKey     []byte
+	Host         string
+	Port         int
+	CertDomain   string
+	Secure       bool
+	RightIP      bool
+	Expired      bool
+	SelfSigned   bool
+	NotBefore    time.Time
+	NotAfter     time.Time
+	Organization string
+	Issuer       string
+	Err          error
+	Len          int
+	RcvData      []byte
+	C2SKey       []byte
+	S2CKey       []byte
 }
 
 type NTSDetectPayload struct {

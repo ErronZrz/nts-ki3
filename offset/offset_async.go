@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<- error) {
+func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh chan<- error, onlyKE bool) {
 	defer func() {
 		wg.Done()
 	}()
@@ -45,6 +45,11 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 		info.CommonName = payload.CertDomain
 		info.RightIP = payload.RightIP
 		info.Expired = payload.Expired
+		info.SelfSigned = payload.SelfSigned
+		info.NotBefore = payload.NotBefore
+		info.NotAfter = payload.NotAfter
+		info.Organization = payload.Organization
+		info.Issuer = payload.Issuer
 		info.Unlock()
 
 		// 解析 Cookie 等信息
@@ -53,6 +58,11 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 			errCh <- err
 			return
 		}
+	}
+
+	// 如果只有 KE 阶段则直接结束
+	if onlyKE {
+		return
 	}
 
 	// 如果不支持该算法则直接结束

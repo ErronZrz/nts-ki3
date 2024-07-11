@@ -1,33 +1,64 @@
 package main
 
 import (
-	"active/nts"
+	"active/datastruct"
 	"active/offset"
+	"bufio"
 	"flag"
 	"fmt"
-	"time"
+	"log"
+	"os"
 )
 
 func main() {
-	var round, interval, roundInterval int
-	var inputPath, outputPath string
-	flag.IntVar(&round, "round", 1, "Number of rounds to run")
-	flag.StringVar(&inputPath, "input", "", "Input text file path")
-	flag.StringVar(&outputPath, "output", "", "Output text file path")
+	// 定义命令行参数
+	var date string
+	var index int
+	var interval int
+	flag.StringVar(&date, "date", "", "The date in format YYYY-MM-DD")
+	flag.IntVar(&index, "index", 0, "The index of the file to process")
 	flag.IntVar(&interval, "interval", 1000, "Interval between tasks in milliseconds")
-	flag.IntVar(&roundInterval, "roundInterval", 60, "Interval between rounds in seconds")
-	flag.IntVar(&nts.PlaceholderNum, "placeholders", 0, "Number of cookie placeholder EFs")
 	flag.Parse()
 
-	for i := 0; i < round; i++ {
-		fmt.Printf("Round %d started.\n", i)
-		err := offset.CalculateOffsetsAsync(inputPath, outputPath, interval)
+	// 检查日期参数是否已提供
+	if date == "" {
+		log.Fatalf("Error: Parameter `date` is required")
+	}
+
+	// 获取用户的主目录
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Error: Unable to get the home directory: %v", err)
+	}
+
+	// 构建输入文件和输出文件的路径
+	inputFilePath := fmt.Sprintf("%s/.nts/%s_ntske_ip_%d.txt", homeDir, date, index)
+	outputFilePath := fmt.Sprintf("%s/.nts/%s_ntske_%d.txt", homeDir, date, index)
+
+	// 执行任务
+	err = offset.NTSKEDetectorWithFlags(inputFilePath, interval)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	outputFile, err := os.Create(outputFilePath)
+	if err != nil {
+		log.Fatalf("Error creating file %s: %v", outputFilePath, err)
+	}
+	defer func() { _ = outputFile.Close() }()
+
+	writer := bufio.NewWriter(outputFile)
+
+	for ip, info := range datastruct.OffsetInfoMap {
+		line := offset.GenerateLine2(ip, info)
+		_, err = writer.WriteString(line)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatalf("Error writing to file %s: %v", outputFilePath, err)
 		}
-		if i < round-1 {
-			fmt.Printf("Round %d finished. Now wait for %d seconds.\n", i, roundInterval)
-			time.Sleep(time.Duration(roundInterval) * time.Second)
-		}
+	}
+
+	err = writer.Flush()
+	if err != nil {
+		log.Fatalf("Error flushing file %s: %v", outputFilePath, err)
 	}
 }
