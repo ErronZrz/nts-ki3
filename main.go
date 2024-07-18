@@ -14,10 +14,10 @@ func main() {
 	// 定义命令行参数
 	var date string
 	var index int
-	var interval int
+	var maxCoroutines int
 	flag.StringVar(&date, "date", "", "The date in format YYYY-MM-DD")
 	flag.IntVar(&index, "index", 0, "The index of the file to process")
-	flag.IntVar(&interval, "interval", 1000, "Interval between tasks in milliseconds")
+	flag.IntVar(&maxCoroutines, "maxCoroutines", 10, "Interval between tasks in milliseconds")
 	flag.Parse()
 
 	// 检查日期参数是否已提供
@@ -36,7 +36,7 @@ func main() {
 	outputFilePath := fmt.Sprintf("%s/.nts/%s_ntske_%d.txt", homeDir, date, index)
 
 	// 执行任务
-	err = offset.NTSKEDetectorWithFlags(inputFilePath, interval)
+	err = offset.NTSKEDetectorWithFlags(inputFilePath, maxCoroutines)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}

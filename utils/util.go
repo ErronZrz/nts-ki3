@@ -327,3 +327,30 @@ func TranslateCountry(countries []string) []string {
 
 	return trRes.Target
 }
+
+func SameFourBytes(s1, s2 []byte) string {
+	// Ensure that both slices are at least 4 bytes long
+	if len(s1) < 4 || len(s2) < 4 {
+		return ""
+	}
+
+	// Create a map to store 4-byte sequences from s1
+	sequences := make(map[string]string)
+	for i := 0; i <= len(s1)-4; i++ {
+		seq := s1[i : i+4]
+		hexSeq := fmt.Sprintf("%02X", seq)
+		sequences[hexSeq] = hexSeq
+	}
+
+	// Check for any sequence in s2 that exists in the map
+	for i := 0; i <= len(s2)-4; i++ {
+		seq := s2[i : i+4]
+		hexSeq := fmt.Sprintf("%02X", seq)
+		if val, found := sequences[hexSeq]; found {
+			return val
+		}
+	}
+
+	// If no sequence is found, return an empty string
+	return ""
+}

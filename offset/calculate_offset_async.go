@@ -2,6 +2,7 @@ package offset
 
 import (
 	"active/datastruct"
+	"active/utils"
 	"bufio"
 	"fmt"
 	"os"
@@ -46,7 +47,10 @@ func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 	for scanner.Scan() {
 		ip := strings.Split(scanner.Text(), "\t")[0]
 		wg.Add(1)
-		go CalculateIPOffset(ip, wg, errCh, 3)
+		go func() {
+			CalculateIPOffset(ip, errCh, 3)
+			wg.Done()
+		}()
 		time.Sleep(time.Duration(interval) * time.Millisecond)
 	}
 
@@ -62,7 +66,7 @@ func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 	return writer.Flush()
 }
 
-func NTSKEDetectorWithFlags(path string, interval int) error {
+func NTSKEDetectorWithFlags(path string, maxCoroutines int) error {
 	// 创建文件
 	file, err := os.Open(path)
 	if err != nil {
@@ -76,6 +80,7 @@ func NTSKEDetectorWithFlags(path string, interval int) error {
 	scanner := bufio.NewScanner(file)
 	wg := new(sync.WaitGroup)
 	errCh := make(chan error, 16)
+	sem := make(chan struct{}, maxCoroutines) // 创建大小为 maxCoroutines 的信号量
 
 	go func() {
 		for err := range errCh {
@@ -87,18 +92,22 @@ func NTSKEDetectorWithFlags(path string, interval int) error {
 
 	for scanner.Scan() {
 		ip := strings.Split(scanner.Text(), "\t")[0]
+
 		wg.Add(1)
-		go CalculateIPOffset(ip, wg, errCh, 1)
-		time.Sleep(time.Duration(interval) * time.Millisecond)
+		sem <- struct{}{} // 尝试向信号量发送数据，如果信号量满则会阻塞
+
+		go func() {
+			CalculateIPOffset(ip, errCh, 1)
+			wg.Done()
+			<-sem // 释放信号量
+		}()
 	}
 
 	wg.Wait()
 	return nil
 }
 
-func CalculateIPOffset(ip string, wg *sync.WaitGroup, errCh chan<- error, aeadNum int) {
-	defer func() { wg.Done() }()
-
+func CalculateIPOffset(ip string, errCh chan<- error, aeadNum int) {
 	datastruct.OffsetMapMu.Lock()
 	info, ok := datastruct.OffsetInfoMap[ip]
 	if !ok {
@@ -151,7 +160,8 @@ func generateLine1(ip string, info *datastruct.OffsetServerInfo) string {
 
 func GenerateLine2(ip string, info *datastruct.OffsetServerInfo) string {
 	cookieMap := info.CookieMap
-	if len(cookieMap[0x0F]) == 0 {
+	cookies256 := cookieMap[0x0F]
+	if len(cookies256) == 0 {
 		return ""
 	}
 
@@ -160,7 +170,7 @@ func GenerateLine2(ip string, info *datastruct.OffsetServerInfo) string {
 		server = "Default"
 	}
 
-	aeadStr := fmt.Sprintf("SIV_CMAC_256(%d)", len(cookieMap[0x0F][0]))
+	aeadStr := fmt.Sprintf("SIV_CMAC_256(%d)", len(cookies256[0]))
 	if len(cookieMap[0x10]) > 0 {
 		aeadStr += fmt.Sprintf(",SIV_CMAC_384(%d)", len(cookieMap[0x10][0]))
 	}
@@ -180,8 +190,16 @@ func GenerateLine2(ip string, info *datastruct.OffsetServerInfo) string {
 	addStr(!info.Expired)
 	addStr(!info.SelfSigned)
 	addStr(!info.T1[0x0F].IsZero())
-	dateFormat := "2006-01-02 15:04:05"
 
+	var keyIDStr string
+	if len(cookies256) >= 2 {
+		keyIDStr = utils.SameFourBytes(cookies256[0], cookies256[1])
+	}
+	if len(keyIDStr) == 0 {
+		keyIDStr = "no-keyID"
+	}
+
+	dateFormat := "2006-01-02 15:04:05"
 	strList := []string{
 		ip,
 		info.CommonName,
@@ -189,6 +207,7 @@ func GenerateLine2(ip string, info *datastruct.OffsetServerInfo) string {
 		info.Port,
 		aeadStr,
 		flagStr,
+		keyIDStr,
 		info.NotBefore.Format(dateFormat),
 		info.NotAfter.Format(dateFormat),
 		info.Organization,
