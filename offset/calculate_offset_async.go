@@ -81,6 +81,7 @@ func NTSKEDetectorWithFlags(path string, maxCoroutines int) error {
 	wg := new(sync.WaitGroup)
 	errCh := make(chan error, 16)
 	sem := make(chan struct{}, maxCoroutines) // 创建大小为 maxCoroutines 的信号量
+	var count, finished int
 
 	go func() {
 		for err := range errCh {
@@ -95,11 +96,15 @@ func NTSKEDetectorWithFlags(path string, maxCoroutines int) error {
 
 		wg.Add(1)
 		sem <- struct{}{} // 尝试向信号量发送数据，如果信号量满则会阻塞
+		count++
+		fmt.Printf("Start %d\n", count)
 
 		go func() {
-			CalculateIPOffset(ip, errCh, 1)
+			CalculateIPOffset(ip, errCh, 3)
 			wg.Done()
 			<-sem // 释放信号量
+			finished++
+			fmt.Printf("Finished %d\n", finished)
 		}()
 	}
 
@@ -119,7 +124,7 @@ func CalculateIPOffset(ip string, errCh chan<- error, aeadNum int) {
 	ipWg := new(sync.WaitGroup)
 	ipWg.Add(3)
 
-	go AsyncRecordNTSTimestamps(ip, 0x0F, ipWg, errCh, false)
+	go AsyncRecordNTSTimestamps(ip, 0x0F, ipWg, errCh, aeadNum < 1)
 	go AsyncRecordNTSTimestamps(ip, 0x10, ipWg, errCh, aeadNum < 2)
 	go AsyncRecordNTSTimestamps(ip, 0x11, ipWg, errCh, aeadNum < 3)
 
@@ -212,6 +217,14 @@ func GenerateLine2(ip string, info *datastruct.OffsetServerInfo) string {
 		info.NotAfter.Format(dateFormat),
 		info.Organization,
 		info.Issuer,
+		time.Now().Format(dateFormat),
+		getOffset1(info, 0x00, false),
+		getOffset1(info, 0x0F, false),
+		getOffset1(info, 0x0F, true),
+		getOffset1(info, 0x10, false),
+		getOffset1(info, 0x10, true),
+		getOffset1(info, 0x11, false),
+		getOffset1(info, 0x11, true),
 	}
 	return strings.Join(strList, "\t") + "\n"
 }

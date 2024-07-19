@@ -113,6 +113,7 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 	}
 	// 接收响应
 	buf := make([]byte, 1024)
+	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
 	_, _, err = conn.ReadFromUDP(buf)
 	if err != nil {
 		errCh <- err

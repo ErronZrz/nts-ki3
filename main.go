@@ -17,7 +17,7 @@ func main() {
 	var maxCoroutines int
 	flag.StringVar(&date, "date", "", "The date in format YYYY-MM-DD")
 	flag.IntVar(&index, "index", 0, "The index of the file to process")
-	flag.IntVar(&maxCoroutines, "maxCoroutines", 10, "Interval between tasks in milliseconds")
+	flag.IntVar(&maxCoroutines, "maxCoroutines", 100, "Interval between tasks in milliseconds")
 	flag.Parse()
 
 	// 检查日期参数是否已提供
@@ -41,7 +41,8 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	outputFile, err := os.Create(outputFilePath)
+	// 追加到文件
+	outputFile, err := os.OpenFile(outputFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("Error creating file %s: %v", outputFilePath, err)
 	}

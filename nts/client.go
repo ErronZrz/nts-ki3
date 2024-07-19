@@ -56,7 +56,7 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 		config.InsecureSkipVerify = true
 	}
 
-	dialer := &net.Dialer{Timeout: timeout}
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
 
 	conn, err := tls.DialWithDialer(dialer, "tcp", host+":4460", config)
 	if err != nil {
@@ -96,9 +96,23 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 	}
 	reqBytes[11] = aeadID
 
+	// 设置读取截止时间
+	writeDeadline := time.Now().Add(5 * time.Second)
+	err = conn.SetWriteDeadline(writeDeadline)
+	if err != nil {
+		return nil, fmt.Errorf("set write deadline failed: %v", err)
+	}
+
 	_, err = conn.Write(reqBytes)
 	if err != nil {
 		return nil, fmt.Errorf("send NTS-KE request failed: %v", err)
+	}
+
+	// 设置读取截止时间
+	readDeadline := time.Now().Add(5 * time.Second)
+	err = conn.SetReadDeadline(readDeadline)
+	if err != nil {
+		return nil, fmt.Errorf("set read deadline failed: %v", err)
 	}
 
 	data, err := io.ReadAll(conn)
