@@ -67,7 +67,7 @@ func CalculateOffsetsAsync(inPath, outPath string, interval int) error {
 }
 
 func NTSKEDetectorWithFlags(path string, maxCoroutines int) error {
-	// 创建文件
+	// 打开文件
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -80,7 +80,8 @@ func NTSKEDetectorWithFlags(path string, maxCoroutines int) error {
 	scanner := bufio.NewScanner(file)
 	wg := new(sync.WaitGroup)
 	errCh := make(chan error, 16)
-	sem := make(chan struct{}, maxCoroutines) // 创建大小为 maxCoroutines 的信号量
+	// 创建大小为 maxCoroutines 的信号量
+	sem := make(chan struct{}, maxCoroutines)
 	var count, finished int
 
 	go func() {
@@ -95,7 +96,8 @@ func NTSKEDetectorWithFlags(path string, maxCoroutines int) error {
 		ip := strings.Split(scanner.Text(), "\t")[0]
 
 		wg.Add(1)
-		sem <- struct{}{} // 尝试向信号量发送数据，如果信号量满则会阻塞
+		// 尝试向信号量发送数据，如果信号量满则会阻塞
+		sem <- struct{}{}
 		count++
 		fmt.Printf("Start %d\n", count)
 

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"active/datastruct"
+	"active/utils"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -170,6 +171,27 @@ func ParseOffsetInfo(data []byte, info *datastruct.OffsetServerInfo, aeadID byte
 		}
 	}
 	return nil
+}
+
+func ParseKeyID(data []byte) (string, error) {
+	records, err := retrieveRecords(data)
+	if err != nil {
+		return "", err
+	}
+	var first []byte
+	for _, r := range records {
+		// Cookie
+		if r.rType != 5 {
+			continue
+		}
+
+		if first == nil {
+			first = r.body
+		} else {
+			return utils.SameFourBytes(first, r.body), nil
+		}
+	}
+	return "", fmt.Errorf("no key ID found in the given data")
 }
 
 func retrieveRecords(data []byte) ([]*record, error) {
