@@ -51,6 +51,93 @@ func AnalyzeInterval(prefix, t1, t2 string) (map[string]int, error) {
 	return res, nil
 }
 
+func SaveIntervalTo(prefix, dst, t1, t2 string) error {
+	file, err := os.OpenFile(dst, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Close() }()
+	writer := bufio.NewWriter(file)
+
+	times, err := timesBetween(t1, t2)
+	if err != nil {
+		return err
+	}
+	m := make(map[string][]string)
+	n := len(times)
+	var idx int
+
+	for _, timeStr := range times {
+		path := prefix + timeStr + "_nts_keyid.txt"
+		err := recordIDs(m, path, idx, n)
+		idx++
+		if err != nil {
+			return err
+		}
+	}
+
+	wanted := func(a, b int) bool {
+		return ((a >= 20 && a <= 28) && (b >= 20 && b <= 28)) || ((a >= 164 && a <= 172) && (b >= 164 && b <= 172))
+	}
+	for ip, ids := range m {
+		lower, upper := intervalRange(ids)
+		if wanted(lower, upper) {
+			_, err = writer.WriteString(fmt.Sprintf("%s\t%d\t%d\n", ip, lower, upper))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return writer.Flush()
+}
+
+func CrossCompare(kePath, itvPath string) (map[string]int, error) {
+	keFile, err := os.Open(kePath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = keFile.Close() }()
+	itvFile, err := os.Open(itvPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = itvFile.Close() }()
+
+	keScanner := bufio.NewScanner(keFile)
+	itvScanner := bufio.NewScanner(itvFile)
+	cookieLenMap := make(map[string]string)
+	cookieLenNumMap := make(map[string]int)
+	res := make(map[string]int)
+
+	for keScanner.Scan() {
+		ke := strings.Split(keScanner.Text(), "\t")
+		ip := ke[0]
+		cookieLen := betweenParentheses(ke[4])
+		if _, ok := cookieLenMap[ip]; !ok {
+			cookieLenMap[ip] = cookieLen
+			cookieLenNumMap[cookieLen]++
+		}
+	}
+
+	fmt.Println(cookieLenNumMap)
+
+	for itvScanner.Scan() {
+		itv := strings.Split(itvScanner.Text(), "\t")
+		ip := itv[0]
+		cookieLen, ok := cookieLenMap[ip]
+		if !ok {
+			continue
+		}
+		itvStr := "24"
+		if len(itv[1]) > 2 {
+			itvStr = "168"
+		}
+		res[cookieLen+"-"+itvStr]++
+	}
+
+	return res, nil
+}
+
 func timesBetween(t1, t2 string) ([]string, error) {
 	layout := "2006010215"
 	start, err := time.Parse(layout, t1)
@@ -189,4 +276,21 @@ func printIDs(ids []string) {
 		}
 	}
 	fmt.Println("]")
+}
+
+func betweenParentheses(s string) string {
+	// 查找第一个左括号的位置
+	start := strings.Index(s, "(")
+	if start == -1 {
+		return "" // 没有找到左括号，返回空字符串
+	}
+
+	// 查找第一个右括号的位置
+	end := strings.Index(s[start+1:], ")")
+	if end == -1 {
+		return "" // 没有找到右括号，返回空字符串
+	}
+
+	// 提取并返回括号内的字符串
+	return s[start+1 : start+1+end]
 }

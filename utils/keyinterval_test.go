@@ -19,6 +19,28 @@ func TestAnalyzeInterval(t *testing.T) {
 	}
 }
 
+func TestSaveIntervalTo(t *testing.T) {
+	prefix := "C:\\Corner\\TMP\\毕设\\NTP\\Ntage15\\0814-key_id_data\\2024-07-30_"
+	dst := "C:\\Corner\\TMP\\毕设\\NTP\\Ntage15\\key-id-pairs.txt"
+	t1 := "2024073012"
+	t2 := "2024081412"
+
+	err := SaveIntervalTo(prefix, dst, t1, t2)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCrossCompare(t *testing.T) {
+	kePath := "C:\\Corner\\TMP\\毕设\\NTP\\Ntage15\\2024-08-14_ntske_0-with-ucloud.txt"
+	itvPath := "C:\\Corner\\TMP\\毕设\\NTP\\Ntage15\\0814-key-id-pairs.txt"
+	res, err := CrossCompare(kePath, itvPath)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(res)
+}
+
 func Test_intervalRange(t *testing.T) {
 	type args struct {
 		ids []string

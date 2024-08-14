@@ -50,7 +50,7 @@ func commonWrite(filePath string, strs []string) {
 			return
 		}
 	} else {
-		file, err = os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
+		file, err = os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Printf("error opening file %s: %v", filePath, err)
 			return

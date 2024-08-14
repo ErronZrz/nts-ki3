@@ -26,6 +26,7 @@ func main() {
 	}
 
 	// 获取用户的主目录
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("Error: Unable to get the home directory: %v", err)

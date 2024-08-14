@@ -13,12 +13,12 @@ func HandleText(path, ipPath, domainPath string) error {
 		return err
 	}
 	defer func() { _ = srcFile.Close() }()
-	ipFile, err := os.OpenFile(ipPath, os.O_APPEND|os.O_WRONLY, 0644)
+	ipFile, err := os.OpenFile(ipPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = ipFile.Close() }()
-	domainFile, err := os.OpenFile(domainPath, os.O_APPEND|os.O_WRONLY, 0644)
+	domainFile, err := os.OpenFile(domainPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
