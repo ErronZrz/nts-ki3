@@ -30,7 +30,7 @@ func main() {
 
 	// 构建输入文件和输出文件的路径
 	inputFilePath := fmt.Sprintf("%s/.nts/%s_ntske_all.txt", homeDir, date)
-	outputFilePath := fmt.Sprintf("%s/.nts/%s-%d_nts_keyid.txt", homeDir, date, time.Now().Hour())
+	outputFilePath := fmt.Sprintf("%s/.nts/%s_%s_nts_keyid.txt", homeDir, date, time.Now().Format("2006010215"))
 
 	// 执行任务
 	err = offset.GetNTSKeyID(inputFilePath, outputFilePath, maxCoroutines)
