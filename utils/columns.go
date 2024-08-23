@@ -74,6 +74,47 @@ func PeriodCount(path string) (map[string]int, error) {
 	return countMap, nil
 }
 
+func NoNTPCount(path string) (map[string]int, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(file)
+
+	countMap := make(map[string]int)
+	visited := make(map[string]bool)
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fields := strings.Split(scanner.Text(), "\t")
+		ip := fields[0]
+		domain := fields[1]
+		if visited[ip] || strings.Contains(domain, "univie") {
+			continue
+		}
+		visited[ip] = true
+
+		ntpOffset := fields[12]
+		ntsNtpOffset := fields[13]
+		if len(ntpOffset) > 1 {
+			continue
+		}
+		fmt.Printf("%s %s %s\n", ip, domain, ntsNtpOffset)
+		if len(ntsNtpOffset) > 1 {
+			countMap["NTS NTP"]++
+		} else {
+			countMap["NO NTS NTP"]++
+		}
+	}
+
+	return countMap, nil
+}
+
 func monthStr(d1, d2 string) string {
 	// 定义时间格式
 	layout := "2006-01-02 15:04:05"

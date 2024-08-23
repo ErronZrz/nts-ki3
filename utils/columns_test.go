@@ -25,3 +25,12 @@ func TestPeriodCount(t *testing.T) {
 	}
 	fmt.Println(countMap)
 }
+
+func TestNoNTPCount(t *testing.T) {
+	path := "C:\\Corner\\TMP\\毕设\\NTP\\Ntage15\\2024-08-14_ntske_0-with-ucloud.txt"
+	countMap, err := NoNTPCount(path)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(countMap)
+}

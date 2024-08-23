@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -107,19 +108,24 @@ func CrossCompare(kePath, itvPath string) (map[string]int, error) {
 	itvScanner := bufio.NewScanner(itvFile)
 	cookieLenMap := make(map[string]string)
 	cookieLenNumMap := make(map[string]int)
+	aeadNumMap := make(map[string]int)
 	res := make(map[string]int)
 
 	for keScanner.Scan() {
 		ke := strings.Split(keScanner.Text(), "\t")
 		ip := ke[0]
 		cookieLen := betweenParentheses(ke[4])
+		parts := strings.Split(ke[4], ",")
 		if _, ok := cookieLenMap[ip]; !ok {
-			cookieLenMap[ip] = cookieLen
+			// cookieLenMap[ip] = cookieLen
+			cookieLenMap[ip] = strconv.Itoa(len(parts))
 			cookieLenNumMap[cookieLen]++
+			aeadNumMap[cookieLen+"-"+strconv.Itoa(len(parts))]++
 		}
 	}
 
 	fmt.Println(cookieLenNumMap)
+	fmt.Println(aeadNumMap)
 
 	for itvScanner.Scan() {
 		itv := strings.Split(itvScanner.Text(), "\t")
