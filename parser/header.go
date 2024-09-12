@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"active/region"
 	"active/utils"
 	"encoding/binary"
 	"errors"
@@ -179,7 +180,7 @@ func parseRefID(data []byte, h *Header) error {
 	} else {
 		// Normal IP address
 		ipStr := fmt.Sprintf("%d.%d.%d.%d", data[12], data[13], data[14], data[15])
-		h.RefID = fmt.Sprintf("%s (%s)", ipStr, utils.RegionOf(ipStr))
+		h.RefID = fmt.Sprintf("%s (%s)", ipStr, region.GetChineseRegion(ipStr, 3))
 	}
 	return nil
 }

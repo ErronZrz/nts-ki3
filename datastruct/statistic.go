@@ -1,6 +1,7 @@
 package datastruct
 
 import (
+	"active/region"
 	"active/utils"
 	"bufio"
 	"encoding/binary"
@@ -26,7 +27,7 @@ func NewStatistic(p *RcvPayload) *Statistic {
 	res := new(Statistic)
 
 	res.IP = p.Host
-	res.Country = utils.CountryOf(p.Host)
+	res.Country = region.GetCountry(p.Host)
 
 	data := p.RcvData
 	stratum := data[1]
@@ -53,7 +54,7 @@ func NewStatistic(p *RcvPayload) *Statistic {
 		}
 	} else {
 		ipStr := fmt.Sprintf("%d.%d.%d.%d", data[12], data[13], data[14], data[15])
-		res.RefCountry = utils.CountryOf(ipStr)
+		res.RefCountry = region.GetCountry(ipStr)
 	}
 
 	return res

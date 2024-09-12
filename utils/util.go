@@ -5,30 +5,20 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
-	"github.com/spf13/viper"
 	"io"
 	"math"
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
 const (
-	configPath    = "../resources/"
-	dbPathKey     = "ip2region.db_path"
-	nullIP        = "0.0.0.0"
-	nullFlag      = "未同步"
-	unknownFlag   = "未知地区"
-	privateFlag   = "内网地址"
 	preciseFormat = "2006-01-02 15:04:05.000000 UTC"
 )
 
 var (
 	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
-	searcher      *xdb.Searcher
 	fixedData     []byte
 	variableData  []byte
 	secData       []byte
@@ -51,20 +41,6 @@ func init() {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,
 	}
-	viper.AddConfigPath(configPath)
-	viper.SetConfigType("yaml")
-	viper.SetConfigName("properties")
-	err := viper.ReadInConfig()
-	if err != nil {
-		// fmt.Printf("error reading resource file: %v\n", err)
-		return
-	}
-	filePath := viper.GetString(dbPathKey)
-	buf, err := xdb.LoadContentFromFile(filePath)
-	if err != nil {
-		fmt.Printf("failed to load content: %v\n", err)
-	}
-	searcher, err = xdb.NewWithBuffer(buf)
 }
 
 func FixedData() []byte {
@@ -87,64 +63,6 @@ func FormatScientific(f float64) string {
 	exp := int(math.Floor(math.Log10(f)))
 	mantissa := f / math.Pow10(exp)
 	return fmt.Sprintf("%.3fe%d", mantissa, exp)
-}
-
-func RegionOf(ipStr string) string {
-	if ipStr == nullIP {
-		return nullFlag
-	}
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return unknownFlag
-	}
-	if ip.IsPrivate() {
-		return privateFlag
-	}
-	region, err := searcher.SearchByStr(ipStr)
-	if err != nil {
-		fmt.Println(err)
-		return unknownFlag
-	}
-	parts := strings.Split(region, "|")
-	country := parts[0]
-	if country == "0" {
-		return unknownFlag
-	}
-	if country != "中国" || parts[2] == "0" {
-		return country
-	}
-	if strings.HasPrefix(parts[3], parts[2]) {
-		return parts[2]
-	}
-	res := strings.ReplaceAll(parts[2], "省", "")
-	if parts[3] == "0" {
-		return res
-	}
-	return res + strings.ReplaceAll(parts[3], "市", "")
-}
-
-func CountryOf(ipStr string) string {
-	if ipStr == nullIP {
-		return nullFlag
-	}
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return unknownFlag
-	}
-	if ip.IsPrivate() {
-		return privateFlag
-	}
-	region, err := searcher.SearchByStr(ipStr)
-	if err != nil {
-		fmt.Println(err)
-		return unknownFlag
-	}
-	parts := strings.Split(region, "|")
-	country := parts[0]
-	if country == "0" {
-		return unknownFlag
-	}
-	return country
 }
 
 func CalculateDelay(timestamp []byte, another time.Time) time.Duration {
