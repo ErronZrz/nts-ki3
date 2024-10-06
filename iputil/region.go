@@ -51,7 +51,7 @@ func GetChineseRegion(ipStr string, level int) string {
 		return unknownFlag
 	}
 	if country != "中国" {
-		return "其他"
+		return country
 	}
 	// 只有国家名或 level 为 1，则返回国家名
 	if parts[2] == "0" || level == 1 {
@@ -59,9 +59,10 @@ func GetChineseRegion(ipStr string, level int) string {
 	}
 	// 直辖市或特别行政区，直接返回
 	if strings.HasPrefix(parts[3], parts[2]) {
-		return parts[2]
+		return "*" + parts[3]
 	}
-	res := strings.ReplaceAll(parts[2], "省", "")
+	// res := "*" + strings.ReplaceAll(parts[2], "省", "")
+	res := "*" + parts[2]
 	// level 为 2，则返回省
 	if parts[3] == "0" || level == 2 {
 		return res

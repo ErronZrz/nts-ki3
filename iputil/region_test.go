@@ -38,6 +38,7 @@ func TestRegionOfFile(t *testing.T) {
 	file, err := os.Open(path)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	defer func() {
 		_ = file.Close()
@@ -58,5 +59,41 @@ func TestRegionOfFile(t *testing.T) {
 	})
 	for _, k := range keys {
 		fmt.Printf("%s: %d\n", k, m[k])
+	}
+}
+
+func TestAddRegion(t *testing.T) {
+	path := "C:\\Corner\\TMP\\BisheData\\0926-report\\readvar.txt"
+	outPath := "C:\\Corner\\TMP\\BisheData\\0926-report\\readvar-Rs.txt"
+	file, err := os.Open(path)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+	outFile, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		_ = outFile.Close()
+	}()
+	scanner := bufio.NewScanner(file)
+	writer := bufio.NewWriter(outFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		ip := strings.Split(line, "\t")[0]
+		_, err = writer.WriteString(line + "\t" + GetChineseRegion(ip, 2) + "\n")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+	err = writer.Flush()
+	if err != nil {
+		t.Error(err)
 	}
 }

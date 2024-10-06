@@ -7,14 +7,13 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-func FetchNTPPackets(filePath string, limit int) (map[string][][]byte, error) {
-	var packets = make(map[string][][]byte) // 以源 IP 地址为键的 map
+func FetchIP2NTPPackets(filePath string, limit int, data map[string][][]byte) error {
 	var count int
 
 	// 打开 .pcap 文件
 	handle, err := pcap.OpenOffline(filePath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer handle.Close()
 
@@ -42,7 +41,7 @@ func FetchNTPPackets(filePath string, limit int) (map[string][][]byte, error) {
 		srcIP := ip.SrcIP.String() // 获取源 IP 地址的字符串表示
 
 		// 将 UDP 数据添加到对应 IP 的列表中
-		packets[srcIP] = append(packets[srcIP], udp.Payload)
+		data[srcIP] = append(data[srcIP], udp.Payload)
 		count++
 
 		if limit > 0 && count >= limit {
@@ -50,18 +49,18 @@ func FetchNTPPackets(filePath string, limit int) (map[string][][]byte, error) {
 		}
 	}
 
-	return packets, nil
+	return nil
 }
 
-func GetVersion(data []byte) string {
-	prefix := []byte("version=")
-	start := bytes.Index(data, prefix)
+func GetVersionOrOS(data []byte, prefix string) string {
+	prefixBytes := []byte(prefix + "=")
+	start := bytes.Index(data, prefixBytes)
 	if start == -1 {
 		return "" // 如果找不到"version="，直接返回空字符串
 	}
 
 	// 查找从"version="之后的第一个引号开始的位置
-	startQuote := start + len(prefix)
+	startQuote := start + len(prefixBytes)
 	if startQuote >= len(data) {
 		return "" // 检查边界，确保不会越界
 	}
