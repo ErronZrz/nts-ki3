@@ -1,7 +1,7 @@
 package datastruct
 
 import (
-	"active/iputil"
+	"active/region"
 	"active/utils"
 	"bytes"
 	"fmt"
@@ -28,7 +28,7 @@ func (p *RcvPayload) Print() {
 }
 
 func (p *RcvPayload) Lines() string {
-	s := fmt.Sprintf("%d bytes received from %s:%d (%s):\n", p.Len, p.Host, p.Port, iputil.GetChineseRegion(p.Host, 3))
+	s := fmt.Sprintf("%d bytes received from %s:%d (%s):\n", p.Len, p.Host, p.Port, region.GetChineseRegion(p.Host, 3))
 	buf := bytes.NewBufferString(s)
 	buf.WriteString(utils.PrintBytes(p.RcvData, 16))
 	// T2 - T1

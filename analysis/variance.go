@@ -192,9 +192,9 @@ func generateVarianceBarChart(dstDir string, prefix string) error {
 	barsMedian.Color = plotutil.Color(1)
 	barsStd.Color = plotutil.Color(2)
 
-	barsAvg.ShowValue = true
-	barsMedian.ShowValue = true
-	barsStd.ShowValue = true
+	//barsAvg.ShowValue = true
+	//barsMedian.ShowValue = true
+	//barsStd.ShowValue = true
 
 	barsAvg.Offset = -width
 	barsMedian.Offset = 0

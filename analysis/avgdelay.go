@@ -153,7 +153,7 @@ func generateCountryAvgDelayBarChart(list []countryDelay, dstDir, prefix string)
 	bars.LineStyle.Width = vg.Length(0)
 	bars.Color = plotutil.Color(0)
 	bars.Horizontal = true
-	bars.ShowValue = true
+	//bars.ShowValue = true
 
 	p.Add(bars)
 	p.NominalY(labels...)

@@ -4,21 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
-	"sort"
 	"strings"
 	"testing"
 )
 
 func TestGetVersion(t *testing.T) {
-	// filePath := "C:\\Corner\\TMP\\BisheData\\2024-06-29_mode6_0.pcap"
 	filePaths := []string{
-		"C:\\Corner\\TMP\\BisheData\\0914-mode6\\2024-09-14_mode6_0.pcap",
-		"C:\\Corner\\TMP\\BisheData\\0914-mode6\\2024-09-14_mode6_1.pcap",
-		"C:\\Corner\\TMP\\BisheData\\0914-mode6\\2024-09-14_mode6_2.pcap",
-		"C:\\Corner\\TMP\\BisheData\\0914-mode6\\2024-09-14_mode6_3.pcap",
+		"C:\\Corner\\TMP\\BisheData\\1019-startover\\2024-09-14_mode6_0.pcap",
+		"C:\\Corner\\TMP\\BisheData\\1019-startover\\2024-09-14_mode6_1.pcap",
+		"C:\\Corner\\TMP\\BisheData\\1019-startover\\2024-09-14_mode6_2.pcap",
+		"C:\\Corner\\TMP\\BisheData\\1019-startover\\2024-09-14_mode6_3.pcap",
 	}
-	dstFile, err := os.Create("C:\\Corner\\TMP\\BisheData\\0914-mode6\\mode6-0.txt")
+	dstFile, err := os.Create("C:\\Corner\\TMP\\BisheData\\1019-startover\\0914-mode6-system.txt")
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,7 +25,7 @@ func TestGetVersion(t *testing.T) {
 	writer := bufio.NewWriter(dstFile)
 	packets := make(map[string][][]byte)
 	for _, filePath := range filePaths {
-		err = FetchIP2NTPPackets(filePath, -1, packets)
+		err = FetchNTPPackets(filePath, packets)
 		if err != nil {
 			t.Error(err)
 			return
@@ -36,22 +33,13 @@ func TestGetVersion(t *testing.T) {
 	}
 
 	var total int
-	field := "system"
-	existSystem := make(map[string]bool)
-	re := regexp.MustCompile(`^\D*`)
 
 	for ip, packetList := range packets {
 		total += len(packetList)
-		exists := make(map[string]bool)
 		for _, packet := range packetList {
-			s := GetVersionOrOS(packet, field)
-			if exists[s] {
-				continue
-			}
-			exists[s] = true
-			existSystem[re.FindString(s)] = true
+			s := GetField(packet, "system")
 			if s == "" {
-				s = "no " + field
+				s = "no system"
 			}
 			_, _ = writer.WriteString(ip + "\t" + s + "\r\n")
 		}
@@ -59,21 +47,12 @@ func TestGetVersion(t *testing.T) {
 	_ = writer.Flush()
 
 	fmt.Println(total)
-	systems := make([]string, 0)
-	for s := range existSystem {
-		systems = append(systems, s)
-	}
-	// 排序
-	sort.Strings(systems)
-	for _, s := range systems {
-		fmt.Println(s)
-	}
 }
 
 func TestClassifyNTPRequest(t *testing.T) {
 	filePath := "C:\\Corner\\TMP\\BisheData\\2024-06-29_mode6_0.pcap"
 	packets := make(map[string][][]byte)
-	err := FetchIP2NTPPackets(filePath, -1, packets)
+	err := FetchNTPPackets(filePath, packets)
 	if err != nil {
 		t.Error(err)
 		return
@@ -86,7 +65,7 @@ func TestClassifyNTPRequest(t *testing.T) {
 	for _, packetList := range packets {
 		total += len(packetList)
 		for _, packet := range packetList {
-			s := GetVersionOrOS(packet, "version")
+			s := GetField(packet, "version")
 			isNtpd := strings.Contains(s, "ntpd")
 			p, err := ParseNTPPacket(packet)
 			if err != nil {
@@ -152,7 +131,7 @@ func TestCross(t *testing.T) {
 
 func cross(pcapPath string, typeMap map[string]int) {
 	packets := make(map[string][][]byte)
-	err := FetchIP2NTPPackets(pcapPath, -1, packets)
+	err := FetchNTPPackets(pcapPath, packets)
 	if err != nil {
 		return
 	}

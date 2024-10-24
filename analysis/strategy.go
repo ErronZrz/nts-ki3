@@ -64,7 +64,7 @@ func drawChart1(data [][]float64, path string) error {
 		}
 		bars.LineStyle.Width = vg.Length(0)
 		bars.Color = plotutil.Color(3 + i/2)
-		bars.ShowValue = true
+		//bars.ShowValue = true
 		bars.Offset = offset
 		offset += width
 
@@ -102,7 +102,7 @@ func drawChart2(data [][]float64, path string) error {
 		}
 		bars.LineStyle.Width = vg.Length(0)
 		bars.Color = plotutil.Color(3 + i/2)
-		bars.ShowValue = true
+		//bars.ShowValue = true
 		bars.Offset = offset
 		offset += width
 
@@ -152,9 +152,9 @@ func DrawNTS(path string) error {
 	bars104.Color = plotutil.Color(1)
 	bars3.Color = plotutil.Color(2)
 
-	barsTotal.ShowValue = true
-	bars104.ShowValue = true
-	bars3.ShowValue = true
+	//barsTotal.ShowValue = true
+	//bars104.ShowValue = true
+	//bars3.ShowValue = true
 
 	barsTotal.Offset = -width
 	bars104.Offset = 0

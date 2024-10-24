@@ -138,7 +138,7 @@ func generateHistogramBarChart(data []float64, name, dstDir, prefix string) erro
 	}
 	bars.LineStyle.Width = vg.Length(0)
 	bars.Color = plotutil.Color(0)
-	bars.ShowValue = true
+	//bars.ShowValue = true
 
 	p.Add(bars)
 	p.NominalX(labels...)

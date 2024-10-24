@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func FetchNTPPackets(pcapPath string) ([][]byte, error) {
+func FetchNTPPackets1(pcapPath string) ([][]byte, error) {
 	var res [][]byte
 	handle, err := pcap.OpenOffline(pcapPath)
 	if err != nil {

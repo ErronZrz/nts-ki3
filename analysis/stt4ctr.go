@@ -128,7 +128,7 @@ func generateStt4CtrBarChart(country, eng string, list []int, dstDir, prefix str
 	}
 	bars.LineStyle.Width = vg.Length(0)
 	bars.Color = plotutil.Color(0)
-	bars.ShowValue = true
+	//bars.ShowValue = true
 
 	p.Add(bars)
 	p.NominalX(stratumNames[i:j]...)
