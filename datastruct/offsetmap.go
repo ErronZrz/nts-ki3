@@ -13,6 +13,7 @@ var (
 type OffsetServerInfo struct {
 	sync.RWMutex
 	C2SKeyMap    map[byte][]byte
+	S2CKeyMap    map[byte][]byte
 	CookieMap    map[byte][][]byte
 	RightIP      bool
 	Expired      bool
@@ -34,6 +35,7 @@ type OffsetServerInfo struct {
 func NewOffsetServerInfo(ip string) *OffsetServerInfo {
 	return &OffsetServerInfo{
 		C2SKeyMap: make(map[byte][]byte),
+		S2CKeyMap: make(map[byte][]byte),
 		CookieMap: make(map[byte][][]byte),
 		Server:    ip,
 		Port:      "123",

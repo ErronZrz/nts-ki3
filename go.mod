@@ -3,6 +3,7 @@ module active
 go 1.21
 
 require (
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/gopacket v1.1.19
 	github.com/lionsoul2014/ip2region/binding/golang v0.0.0-20240307020853-f8f5f687e6a2
 	github.com/secure-io/siv-go v0.0.0-20180922214919-5ff40651e2c4
@@ -13,6 +14,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	git.sr.ht/~sbinet/gg v0.5.0 // indirect
 	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect

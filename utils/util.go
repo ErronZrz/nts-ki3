@@ -86,13 +86,20 @@ func ParseTimestamp(timestamp []byte) time.Time {
 	return intTime.Add(fracDuration)
 }
 
-func VariableData() []byte {
-	d := time.Now().Sub(startingPoint)
+func GetTimestamp(t time.Time) []byte {
+	d := t.Sub(startingPoint)
 	seconds := d / time.Second
 	high32 := seconds << 32
 	nano := d - seconds*time.Second
 	low32 := (nano << 32) / time.Second
-	binary.BigEndian.PutUint64(variableData[40:], uint64(high32|low32))
+	res := make([]byte, 8)
+	binary.BigEndian.PutUint64(res, uint64(high32|low32))
+	return res
+}
+
+func VariableData() []byte {
+	timestamp := GetTimestamp(time.Now())
+	copy(variableData[40:], timestamp)
 	return variableData
 }
 

@@ -31,3 +31,19 @@ func TestTranslateCountry(t *testing.T) {
 	result := TranslateCountry(countries)
 	fmt.Println(result)
 }
+
+func TestParseNTPTimestamp(t *testing.T) {
+	timestamp := make([]byte, 8)
+	for i := range timestamp {
+		timestamp[i] = 0xFF
+	}
+	parsed := ParseTimestamp(timestamp)
+	fmt.Println(parsed)
+}
+
+func TestGetTimestamp(t *testing.T) {
+	tm := time.Now().AddDate(10, 0, 0)
+	timestamp := GetTimestamp(tm)
+	fmt.Println(timestamp)
+	fmt.Println(ParseTimestamp(timestamp))
+}
