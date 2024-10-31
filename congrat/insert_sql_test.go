@@ -82,6 +82,7 @@ func init() {
 		info.T3[id] = t3s[i]
 		info.T4[id] = t4s[i]
 	}
+	// 改了时间戳赋值，所以这里不能这么写
 	info.T1[0] = time.Now().AddDate(0, 1, 0)
 	info.RealT1[0] = time.Now().AddDate(0, 2, 0)
 	info.T2[0] = time.Now().AddDate(0, 3, 0)

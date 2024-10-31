@@ -22,6 +22,7 @@ var (
 	fixedData     []byte
 	variableData  []byte
 	secData       []byte
+	globalStart   = time.Now()
 )
 
 func init() {
@@ -98,18 +99,14 @@ func GetTimestamp(t time.Time) []byte {
 }
 
 func VariableData() []byte {
-	timestamp := GetTimestamp(time.Now())
+	timestamp := GetTimestamp(GlobalNowTime())
 	copy(variableData[40:], timestamp)
 	return variableData
 }
 
 func SecData() []byte {
-	d := time.Now().Sub(startingPoint)
-	seconds := d / time.Second
-	high32 := seconds << 32
-	nano := d - seconds*time.Second
-	low32 := (nano << 32) / time.Second
-	binary.BigEndian.PutUint64(secData[40:], uint64(high32|low32))
+	timestamp := GetTimestamp(GlobalNowTime())
+	copy(secData[40:], timestamp)
 	return secData
 }
 
@@ -278,4 +275,8 @@ func SameFourBytes(s1, s2 []byte) string {
 
 	// If no sequence is found, return an empty string
 	return ""
+}
+
+func GlobalNowTime() time.Time {
+	return globalStart.Add(time.Since(globalStart))
 }

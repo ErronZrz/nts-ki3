@@ -27,7 +27,7 @@ func insertKeyTimestamps(db *sql.DB, serverInfo *datastruct.OffsetServerInfo) er
         t1, t1r, t2, t3, t4, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
-	for aeadID, t1Time := range serverInfo.T1 {
+	for aeadID, timestamps := range serverInfo.Timestamps {
 		c2sKey := serverInfo.C2SKeyMap[aeadID]
 		s2cKey := serverInfo.S2CKeyMap[aeadID]
 		var cookies []byte
@@ -39,11 +39,14 @@ func insertKeyTimestamps(db *sql.DB, serverInfo *datastruct.OffsetServerInfo) er
 				copy(cookies[i*n:], cookie)
 			}
 		}
-		t1 := utils.GetTimestamp(t1Time)
-		t1r := utils.GetTimestamp(serverInfo.RealT1[aeadID])
-		t2 := utils.GetTimestamp(serverInfo.T2[aeadID])
-		t3 := utils.GetTimestamp(serverInfo.T3[aeadID])
+		var t1r []byte
+		t1, t2, t3 := timestamps[:8], timestamps[8:16], timestamps[16:]
 		t4 := utils.GetTimestamp(serverInfo.T4[aeadID])
+		if aeadID == 0 {
+			t1r = t1
+		} else {
+			t1r = utils.GetTimestamp(serverInfo.RealT1[aeadID])
+		}
 
 		_, err := db.Exec(query, serverInfo.Server, aeadID, c2sKey, s2cKey, cookies, t1, t1r, t2, t3, t4)
 		if err != nil {
