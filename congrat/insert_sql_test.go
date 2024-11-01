@@ -3,6 +3,7 @@ package congrat
 import (
 	"active/datastruct"
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"testing"
 	"time"
@@ -104,14 +105,19 @@ func TestInsert(t *testing.T) {
 		_ = db.Close()
 	}()
 
-	err = insertServerInfo(db, info)
+	err = insertServerInfo(db, "127.0.0.1", info)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = insertKeyTimestamps(db, info)
+	err = insertKeyTimestamps(db, "127.0.0.1", info)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+}
+
+func TestAdjustTime(t *testing.T) {
+	tm := time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+	fmt.Println(adjustTime(tm))
 }

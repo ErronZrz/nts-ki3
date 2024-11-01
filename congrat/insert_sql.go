@@ -5,24 +5,31 @@ import (
 	"active/utils"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
-func insertServerInfo(db *sql.DB, serverInfo *datastruct.OffsetServerInfo) error {
+var (
+	mySQLStart = time.Date(1971, 1, 1, 0, 0, 1, 0, time.UTC)
+	mySQLEnd   = time.Date(2037, 1, 19, 3, 14, 7, 0, time.UTC)
+)
+
+func insertServerInfo(db *sql.DB, ip string, serverInfo *datastruct.OffsetServerInfo) error {
 	query := `INSERT INTO ke_servers (ip_address, domain_name, cert_org, cert_issuer, 
         ntpv4_address, ntpv4_port, domain_matches_ip, cert_not_expired, cert_not_self_signed, 
         cert_not_before, cert_not_after, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
-	_, err := db.Exec(query, serverInfo.Server, serverInfo.CommonName, serverInfo.Organization,
+	_, err := db.Exec(query, ip, serverInfo.CommonName, serverInfo.Organization,
 		serverInfo.Issuer, serverInfo.Server, serverInfo.Port, serverInfo.RightIP, !serverInfo.Expired,
-		!serverInfo.SelfSigned, serverInfo.NotBefore, serverInfo.NotAfter)
+		!serverInfo.SelfSigned, adjustTime(serverInfo.NotBefore), adjustTime(serverInfo.NotAfter))
+	fmt.Println(adjustTime(serverInfo.NotBefore), adjustTime(serverInfo.NotAfter))
 	if err != nil {
 		return fmt.Errorf("error inserting server info: %v", err)
 	}
 	return nil
 }
 
-func insertKeyTimestamps(db *sql.DB, serverInfo *datastruct.OffsetServerInfo) error {
+func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetServerInfo) error {
 	query := `INSERT INTO ke_key_timestamp (ip_address, aead_id, c2s_key, s2c_key, cookies, 
         t1, t1r, t2, t3, t4, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
@@ -48,10 +55,20 @@ func insertKeyTimestamps(db *sql.DB, serverInfo *datastruct.OffsetServerInfo) er
 			t1r = utils.GetTimestamp(serverInfo.RealT1[aeadID])
 		}
 
-		_, err := db.Exec(query, serverInfo.Server, aeadID, c2sKey, s2cKey, cookies, t1, t1r, t2, t3, t4)
+		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, t1, t1r, t2, t3, t4)
 		if err != nil {
 			return fmt.Errorf("error inserting key timestamp for aeadID %d: %v", aeadID, err)
 		}
 	}
 	return nil
+}
+
+func adjustTime(t time.Time) time.Time {
+	if t.Before(mySQLStart) {
+		return mySQLStart
+	}
+	if t.After(mySQLEnd) {
+		return mySQLEnd
+	}
+	return t
 }

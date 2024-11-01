@@ -5,10 +5,82 @@ import (
 	"active/nts"
 	"active/offset"
 	"active/utils"
+	"bufio"
+	"fmt"
 	"net"
+	"os"
+	"strings"
 	"sync"
 	"time"
 )
+
+func MainFunction(path string, maxCoroutines int) error {
+	// 打开文件
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = file.Close()
+	}()
+
+	scanner := bufio.NewScanner(file)
+	wg := new(sync.WaitGroup)
+	errCh := make(chan error, 16)
+	// 创建大小为 maxCoroutines 的信号量
+	sem := make(chan struct{}, maxCoroutines)
+	var count, finished int
+
+	go func() {
+		for err := range errCh {
+			if !errContains(err, "i/o timeout", "deadline exceeded", "failed to respond", "no such host") {
+				fmt.Println(err)
+			}
+		}
+	}()
+
+	var ipList []string
+
+	for scanner.Scan() {
+		ip := strings.Split(scanner.Text(), "\t")[0]
+		ipList = append(ipList, ip)
+
+		wg.Add(1)
+		// 尝试向信号量发送数据，如果信号量满则会阻塞
+		sem <- struct{}{}
+		count++
+		fmt.Printf("Start NTS-KE %d\n", count)
+
+		go func(ip string) {
+			ExecuteServerNTSKE(ip, errCh)
+			wg.Done()
+			<-sem // 释放信号量
+			finished++
+			fmt.Printf("Finished NTS-KE %d\n", finished)
+		}(ip)
+	}
+
+	wg.Wait()
+
+	for _, ip := range ipList {
+		wg.Add(1)
+		sem <- struct{}{}
+		count++
+		fmt.Printf("Start NTP %d\n", count)
+
+		go func(ip string) {
+			ExecuteServerSecureNTP(ip, errCh)
+			wg.Done()
+			<-sem // 释放信号量
+			finished++
+			fmt.Printf("Finished NTP %d\n", finished)
+		}(ip)
+	}
+
+	wg.Wait()
+	return nil
+}
 
 func ExecuteServerNTSKE(ip string, errCh chan<- error) {
 	datastruct.OffsetMapMu.Lock()
@@ -118,4 +190,14 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 	info.T4[aeadID] = utils.GlobalNowTime()
 	info.Timestamps[aeadID] = buf[24:48]
 	info.Unlock()
+}
+
+func errContains(err error, substrList ...string) bool {
+	errStr := err.Error()
+	for _, substr := range substrList {
+		if strings.Contains(errStr, substr) {
+			return true
+		}
+	}
+	return false
 }
