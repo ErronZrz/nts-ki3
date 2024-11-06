@@ -42,6 +42,7 @@ func SelectSamples(samples []*sample, minCandidates int, strict bool) []*sample 
 	})
 	var count, crossMid int
 	var low, high float64
+	var meet bool
 	for nFake := 0; nFake < n/2; nFake++ {
 		count, crossMid = 0, 0
 		for _, s := range extended {
@@ -68,10 +69,11 @@ func SelectSamples(samples []*sample, minCandidates int, strict bool) []*sample 
 		}
 		if (!strict || crossMid <= nFake) && low < high {
 			fmt.Printf("nFake=%d ", nFake)
+			meet = true
 			break
 		}
 	}
-	if low >= high {
+	if !meet {
 		return nil
 	}
 	var res []*sample
