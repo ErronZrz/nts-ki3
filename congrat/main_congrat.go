@@ -181,13 +181,14 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 	// 接收响应
 	buf := make([]byte, 1024)
 	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
-	_, _, err = conn.ReadFromUDP(buf)
+	n, _, err := conn.ReadFromUDP(buf)
 	if err != nil {
 		errCh <- err
 		return
 	}
 	// 记录时间戳
 	info.Lock()
+	info.PacketLen[aeadID] = n
 	info.T4[aeadID] = utils.GlobalNowTime()
 	info.Timestamps[aeadID] = buf[24:48]
 	info.Unlock()

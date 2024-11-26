@@ -25,6 +25,7 @@ type OffsetServerInfo struct {
 	Issuer       string
 	Server       string
 	Port         string
+	PacketLen    map[byte]int
 	TTLs         map[byte]int
 	T1           map[byte]time.Time
 	T2           map[byte]time.Time
@@ -41,6 +42,7 @@ func NewOffsetServerInfo(ip string) *OffsetServerInfo {
 		CookieMap:  make(map[byte][][]byte),
 		Server:     ip,
 		Port:       "123",
+		PacketLen:  make(map[byte]int),
 		TTLs:       make(map[byte]int),
 		T1:         make(map[byte]time.Time),
 		T2:         make(map[byte]time.Time),

@@ -31,10 +31,11 @@ func insertServerInfo(db *sql.DB, ip string, serverInfo *datastruct.OffsetServer
 
 func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetServerInfo) error {
 	query := `INSERT INTO ke_key_timestamp (ip_address, aead_id, c2s_key, s2c_key, cookies, 
-        ttl, t1, t1r, t2, t3, t4, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
+        packet_len, ttl, t1, t1r, t2, t3, t4, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
 	for aeadID, timestamps := range serverInfo.Timestamps {
+		packetLen := serverInfo.PacketLen[aeadID]
 		ttl := serverInfo.TTLs[aeadID]
 		c2sKey := serverInfo.C2SKeyMap[aeadID]
 		s2cKey := serverInfo.S2CKeyMap[aeadID]
@@ -56,7 +57,7 @@ func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetSer
 			t1r = utils.GetTimestamp(serverInfo.RealT1[aeadID])
 		}
 
-		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, ttl, t1, t1r, t2, t3, t4)
+		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, packetLen, ttl, t1, t1r, t2, t3, t4)
 		if err != nil {
 			return fmt.Errorf("error inserting key timestamp for aeadID %d: %v", aeadID, err)
 		}
