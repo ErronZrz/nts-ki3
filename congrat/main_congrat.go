@@ -62,6 +62,7 @@ func MainFunction(path string, maxCoroutines int) error {
 	}
 
 	wg.Wait()
+	count, finished = 0, 0
 
 	for _, ip := range ipList {
 		wg.Add(1)

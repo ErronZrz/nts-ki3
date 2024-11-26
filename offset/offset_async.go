@@ -120,6 +120,20 @@ func AsyncRecordNTSTimestamps(ip string, aeadID byte, wg *sync.WaitGroup, errCh 
 		errCh <- err
 		return
 	}
+	/*
+		f, err := conn.File()
+		if err != nil {
+			errCh <- err
+			return
+		}
+		defer func() { _ = f.Close() }()
+		ttl, err := windows.GetsockoptInt(windows.Handle(f.Fd()), windows.IPPROTO_IP, windows.IP_TTL)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		fmt.Println(ttl)
+	*/
 	// 记录时间戳
 	info.Lock()
 	info.T4[aeadID] = time.Now()

@@ -7,7 +7,7 @@ import (
 )
 
 func TestMainFunction(t *testing.T) {
-	path := "C:\\Corner\\TMP\\BisheData\\1101-everNTS-100.txt"
+	path := "C:\\Corner\\TMP\\BisheData\\1122-everNTS-100.txt"
 	maxGoroutines := 20
 	err := MainFunction(path, maxGoroutines)
 	if err != nil {

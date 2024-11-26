@@ -22,7 +22,7 @@ func insertServerInfo(db *sql.DB, ip string, serverInfo *datastruct.OffsetServer
 	_, err := db.Exec(query, ip, serverInfo.CommonName, serverInfo.Organization,
 		serverInfo.Issuer, serverInfo.Server, serverInfo.Port, serverInfo.RightIP, !serverInfo.Expired,
 		!serverInfo.SelfSigned, adjustTime(serverInfo.NotBefore), adjustTime(serverInfo.NotAfter))
-	fmt.Println(adjustTime(serverInfo.NotBefore), adjustTime(serverInfo.NotAfter))
+	// fmt.Println(adjustTime(serverInfo.NotBefore), adjustTime(serverInfo.NotAfter))
 	if err != nil {
 		return fmt.Errorf("error inserting server info: %v", err)
 	}
@@ -31,10 +31,11 @@ func insertServerInfo(db *sql.DB, ip string, serverInfo *datastruct.OffsetServer
 
 func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetServerInfo) error {
 	query := `INSERT INTO ke_key_timestamp (ip_address, aead_id, c2s_key, s2c_key, cookies, 
-        t1, t1r, t2, t3, t4, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
+        ttl, t1, t1r, t2, t3, t4, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
 	for aeadID, timestamps := range serverInfo.Timestamps {
+		ttl := serverInfo.TTLs[aeadID]
 		c2sKey := serverInfo.C2SKeyMap[aeadID]
 		s2cKey := serverInfo.S2CKeyMap[aeadID]
 		var cookies []byte
@@ -55,7 +56,7 @@ func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetSer
 			t1r = utils.GetTimestamp(serverInfo.RealT1[aeadID])
 		}
 
-		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, t1, t1r, t2, t3, t4)
+		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, ttl, t1, t1r, t2, t3, t4)
 		if err != nil {
 			return fmt.Errorf("error inserting key timestamp for aeadID %d: %v", aeadID, err)
 		}
