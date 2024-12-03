@@ -44,6 +44,7 @@ func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetSer
 		if len(cookieList) > 0 {
 			n := len(cookieList[0])
 			cookies = make([]byte, n*len(cookieList))
+			fmt.Println(len(cookies))
 			for i, cookie := range cookieList {
 				copy(cookies[i*n:], cookie)
 			}

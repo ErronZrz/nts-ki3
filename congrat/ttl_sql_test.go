@@ -15,7 +15,7 @@ func TestUpdateTTLWithFile(t *testing.T) {
 		_ = db.Close()
 	}()
 
-	path := "C:\\Corner\\TMP\\NTPData\\1126-4.pcapng"
+	path := "C:\\Corner\\TMP\\NTPData\\1203-2.pcapng"
 	err = UpdateTTLWithFile(path, db)
 	if err != nil {
 		t.Error(err)

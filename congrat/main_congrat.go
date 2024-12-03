@@ -6,6 +6,7 @@ import (
 	"active/offset"
 	"active/utils"
 	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -139,12 +140,13 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 		return
 	}
 	// 生成请求数据
-	var req []byte
+	var req, s2c []byte
 	if aeadID == 0 {
 		req = utils.SecData()
 	} else {
 		info.RLock()
 		c2s, cookie := info.C2SKeyMap[aeadID], info.CookieMap[aeadID][0]
+		s2c = info.S2CKeyMap[aeadID]
 		info.RUnlock()
 		req, err = nts.GenerateSecureNTPRequest(c2s, cookie)
 		if err != nil {
@@ -185,6 +187,18 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 	if err != nil {
 		errCh <- err
 		return
+	}
+	if aeadID != 0 {
+		// 验证响应
+		cookieBuf := new(bytes.Buffer)
+		err = nts.ValidateResponse(buf[:n], s2c, cookieBuf)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		info.Lock()
+		info.CookieMap[aeadID] = append(info.CookieMap[aeadID], cookieBuf.Bytes())
+		info.Unlock()
 	}
 	// 记录时间戳
 	info.Lock()

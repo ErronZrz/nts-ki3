@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/binary"
+	"errors"
 	"github.com/secure-io/siv-go"
 )
 
@@ -44,10 +45,16 @@ func GenerateSecureNTPRequest(c2s, cookie []byte) ([]byte, error) {
 
 // ValidateResponse 解析并验证 NTS 服务器响应
 func ValidateResponse(data, key []byte, cookieBuf *bytes.Buffer) error {
-	ad := data[:84]
-	cipherLen := 16*int(data[90]) + int(data[91])
-	nonce := data[92:108]
-	cipherText := data[108 : 108+cipherLen]
+	if len(data) < 160 {
+		return errors.New("data length is too short")
+	}
+	ad := make([]byte, 84)
+	copy(ad, data)
+	cipherLen := 256*int(data[90]) + int(data[91])
+	nonce := make([]byte, 16)
+	copy(nonce, data[92:])
+	cipherText := make([]byte, cipherLen)
+	copy(cipherText, data[108:])
 
 	// 创建 SIV-CMAC AEAD 实例
 	aead, err := siv.NewCMAC(key)
@@ -63,8 +70,7 @@ func ValidateResponse(data, key []byte, cookieBuf *bytes.Buffer) error {
 	}
 
 	// 将解密后的 Cookie 数据写入 buffer
-	cookieData := result[16:]
-	cookieBuf.Write(cookieData)
+	cookieBuf.Write(result)
 
 	return nil
 }
