@@ -2,6 +2,12 @@ package congrat
 
 import "database/sql"
 
+func MaxID(db *sql.DB) (int64, error) {
+	var id int64
+	err := db.QueryRow("SELECT MAX(id) FROM ke_key_timestamp").Scan(&id)
+	return id, err
+}
+
 func fetchRecords(db *sql.DB) (map[string]map[byte]*IPTimestamps, error) {
 	query := `
 	WITH RankedRecords AS (

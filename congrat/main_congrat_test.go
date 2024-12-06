@@ -3,11 +3,12 @@ package congrat
 import (
 	"active/datastruct"
 	"database/sql"
+	"fmt"
 	"testing"
 )
 
 func TestMainFunction(t *testing.T) {
-	path := "C:\\Corner\\TMP\\BisheData\\1122-everNTS-100.txt"
+	path := "C:\\Corner\\TMP\\BisheData\\1206-everNTS-100.txt"
 	maxGoroutines := 20
 	err := MainFunction(path, maxGoroutines)
 	if err != nil {
@@ -23,6 +24,8 @@ func TestMainFunction(t *testing.T) {
 		_ = db.Close()
 	}()
 
+	maxID, err := MaxID(db)
+	fmt.Println("maxID:", maxID)
 	for ip, info := range datastruct.OffsetInfoMap {
 		err = insertServerInfo(db, ip, info)
 		if err != nil {

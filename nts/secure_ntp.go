@@ -44,7 +44,7 @@ func GenerateSecureNTPRequest(c2s, cookie []byte) ([]byte, error) {
 }
 
 // ValidateResponse 解析并验证 NTS 服务器响应
-func ValidateResponse(data, key []byte, cookieBuf *bytes.Buffer) error {
+func ValidateResponse(data, s2c []byte, cookieBuf *bytes.Buffer) error {
 	if len(data) < 160 {
 		return errors.New("data length is too short")
 	}
@@ -57,7 +57,7 @@ func ValidateResponse(data, key []byte, cookieBuf *bytes.Buffer) error {
 	copy(cipherText, data[108:])
 
 	// 创建 SIV-CMAC AEAD 实例
-	aead, err := siv.NewCMAC(key)
+	aead, err := siv.NewCMAC(s2c)
 	if err != nil {
 		return err
 	}

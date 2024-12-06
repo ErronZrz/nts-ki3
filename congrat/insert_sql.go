@@ -30,13 +30,18 @@ func insertServerInfo(db *sql.DB, ip string, serverInfo *datastruct.OffsetServer
 }
 
 func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetServerInfo) error {
-	query := `INSERT INTO ke_key_timestamp (ip_address, aead_id, c2s_key, s2c_key, cookies, 
-        packet_len, ttl, t1, t1r, t2, t3, t4, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
+	query := `INSERT INTO ke_key_timestamp (ip_address, aead_id, c2s_key, s2c_key, cookies, packet_len, ttl, 
+        stratum, poll, ntp_precision, root_delay, root_dispersion, t1, t1r, t2, t3, t4, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
 	for aeadID, timestamps := range serverInfo.Timestamps {
 		packetLen := serverInfo.PacketLen[aeadID]
 		ttl := serverInfo.TTLs[aeadID]
+		stratum := serverInfo.Strata[aeadID]
+		poll := serverInfo.Polls[aeadID]
+		precision := serverInfo.Precisions[aeadID]
+		rootDelay := serverInfo.RootDelays[aeadID]
+		rootDispersion := serverInfo.RootDispersions[aeadID]
 		c2sKey := serverInfo.C2SKeyMap[aeadID]
 		s2cKey := serverInfo.S2CKeyMap[aeadID]
 		var cookies []byte
@@ -44,7 +49,6 @@ func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetSer
 		if len(cookieList) > 0 {
 			n := len(cookieList[0])
 			cookies = make([]byte, n*len(cookieList))
-			fmt.Println(len(cookies))
 			for i, cookie := range cookieList {
 				copy(cookies[i*n:], cookie)
 			}
@@ -58,7 +62,8 @@ func insertKeyTimestamps(db *sql.DB, ip string, serverInfo *datastruct.OffsetSer
 			t1r = utils.GetTimestamp(serverInfo.RealT1[aeadID])
 		}
 
-		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, packetLen, ttl, t1, t1r, t2, t3, t4)
+		_, err := db.Exec(query, ip, aeadID, c2sKey, s2cKey, cookies, packetLen, ttl,
+			stratum, poll, precision, rootDelay, rootDispersion, t1, t1r, t2, t3, t4)
 		if err != nil {
 			return fmt.Errorf("error inserting key timestamp for aeadID %d: %v", aeadID, err)
 		}

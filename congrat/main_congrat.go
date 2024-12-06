@@ -200,9 +200,15 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 		info.CookieMap[aeadID] = append(info.CookieMap[aeadID], cookieBuf.Bytes())
 		info.Unlock()
 	}
-	// 记录时间戳
 	info.Lock()
 	info.PacketLen[aeadID] = n
+	// 记录 NTP 字段
+	info.Strata[aeadID] = int(buf[1])
+	info.Polls[aeadID] = int(int8(buf[2]))
+	info.Precisions[aeadID] = int(int8(buf[3]))
+	info.RootDelays[aeadID] = buf[4:8]
+	info.RootDispersions[aeadID] = buf[8:12]
+	// 记录时间戳
 	info.T4[aeadID] = utils.GlobalNowTime()
 	info.Timestamps[aeadID] = buf[24:48]
 	info.Unlock()
