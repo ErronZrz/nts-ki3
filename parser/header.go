@@ -178,7 +178,7 @@ func parseRefID(data []byte, h *Header) error {
 		// Special reference identifier
 		h.RefID = completeSource(data[12:16])
 	} else {
-		// Normal IP address
+		// Normal ip address
 		ipStr := fmt.Sprintf("%d.%d.%d.%d", data[12], data[13], data[14], data[15])
 		h.RefID = fmt.Sprintf("%s (%s)", ipStr, region.GetChineseRegion(ipStr, 3))
 	}

@@ -65,7 +65,7 @@ func PTRRecords(path, ptrPath string) error {
 		}()
 	}
 
-	// 主线程扫描 IP 并分发到 jobs
+	// 主线程扫描 ip 并分发到 jobs
 	go func() {
 		for scanner.Scan() {
 			line := scanner.Text()

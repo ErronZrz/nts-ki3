@@ -40,7 +40,7 @@ func ExtractNTPPackets(dataPath, dstDir string) error {
 		// Extracting NTP payload
 		ntpPayload := udp.Payload
 
-		// Create a filename from the destination IP
+		// Create a filename from the destination ip
 		fileName := fmt.Sprintf("%s/%s_%d.pkt", dstDir, ip.DstIP, port)
 		err = os.WriteFile(fileName, ntpPayload, 0644)
 		if err != nil {

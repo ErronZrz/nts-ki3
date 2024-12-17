@@ -58,7 +58,7 @@ func AmplificationFactors(path, outPath string) error {
 				sourceIP := ip.SrcIP.String()
 				stat := stats[sourceIP]
 				stat.packets++
-				// IP 数据报长度
+				// ip 数据报长度
 				stat.totalLength += int(ip.Length)
 				stats[sourceIP] = stat
 			}

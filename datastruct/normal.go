@@ -40,7 +40,7 @@ func (p *RcvPayload) Lines() string {
 	buf.WriteString(fmt.Sprintf("Send delay:    %s\n", durationToStr(sendDelay)))
 	buf.WriteString(fmt.Sprintf("Receive delay: %s\n", durationToStr(rcvDelay)))
 	buf.WriteString(fmt.Sprintf("Average delay: %s\n", durationToStr(avgDelay)))
-	buf.WriteString(fmt.Sprintf("Offset:        %s\n", durationToStr(offset)))
+	buf.WriteString(fmt.Sprintf("offset:        %s\n", durationToStr(offset)))
 	return buf.String()
 }
 

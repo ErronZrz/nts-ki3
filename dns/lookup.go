@@ -212,7 +212,7 @@ func commonDNS(src, dst string, work extraWork) error {
 		}
 
 		if len(ips) == 0 {
-			_, err = writer.WriteString("    no IP address found\n\n")
+			_, err = writer.WriteString("    no ip address found\n\n")
 			if err != nil {
 				return fmt.Errorf("error writing empty result: %v", err)
 			}
@@ -224,12 +224,12 @@ func commonDNS(src, dst string, work extraWork) error {
 			if work != nil {
 				err = work(domain, ipStr)
 				if err != nil {
-					return fmt.Errorf("error handling IP %s: %v", ipStr, err)
+					return fmt.Errorf("error handling ip %s: %v", ipStr, err)
 				}
 			}
 			_, err = writer.WriteString(fmt.Sprintf("    %s\n", ipStr))
 			if err != nil {
-				return fmt.Errorf("error writing IP %s: %v", ipStr, err)
+				return fmt.Errorf("error writing ip %s: %v", ipStr, err)
 			}
 		}
 		_ = writer.WriteByte('\n')

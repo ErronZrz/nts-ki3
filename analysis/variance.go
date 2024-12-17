@@ -244,8 +244,7 @@ func getSingle(list []float64, isSync bool) {
 func standardDevOf(list []float64, avg float64) float64 {
 	var res float64
 	for _, v := range list {
-		diff := v - avg
-		res += diff * diff
+		res += math.Pow(v-avg, 2)
 	}
 	if res == 0 {
 		return 0

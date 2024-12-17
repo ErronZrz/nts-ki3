@@ -14,7 +14,7 @@ func UpdateTTLWithFile(path string, db *sql.DB) error {
 }
 
 func updateTTL(data map[string][][]int, db *sql.DB) error {
-	// 首先查询所有 IP 及其 ID
+	// 首先查询所有 ip 及其 ID
 	query := `
 	SELECT MAX(id) AS id, ip_address AS ip
 	FROM ke_key_timestamp

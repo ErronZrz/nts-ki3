@@ -39,7 +39,7 @@ func readNetworkNTP(ctx context.Context, cidr string, conn *net.UDPConn, doneCh 
 				continue
 			}
 			if !ipNet.Contains(udpAddr.IP) {
-				fmt.Println("IP out of range: " + udpAddr.IP.String())
+				fmt.Println("ip out of range: " + udpAddr.IP.String())
 				continue
 			}
 			payload := &datastruct.RcvPayload{

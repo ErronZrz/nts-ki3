@@ -8,7 +8,7 @@ func TestVarianceBarChart(t *testing.T) {
 	prefix := "Z_"
 	params := varParams{
 		valCol:       7,
-		yText:        "Offset",
+		yText:        "offset",
 		unit:         "μs",
 		divisor:      float64(2<<32) / 1000000,
 		low:          -500,

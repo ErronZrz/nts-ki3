@@ -17,14 +17,14 @@ func FetchNTPPackets(filePath string, packets map[string][][]byte) error {
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	for packet := range packetSource.Packets() {
-		// 提取源 IP 地址
+		// 提取源 ip 地址
 		ipLayer := packet.Layer(layers.LayerTypeIPv4)
 		if ipLayer == nil {
 			continue
 		}
 		ip, _ := ipLayer.(*layers.IPv4)
 
-		srcIP := ip.SrcIP.String() // 获取源 IP 地址的字符串表示
+		srcIP := ip.SrcIP.String() // 获取源 ip 地址的字符串表示
 
 		if _, ok := packets[srcIP]; ok {
 			continue
@@ -42,7 +42,7 @@ func FetchNTPPackets(filePath string, packets map[string][][]byte) error {
 			continue
 		}
 
-		// 将 UDP 数据添加到对应 IP 的列表中
+		// 将 UDP 数据添加到对应 ip 的列表中
 		packets[srcIP] = append(packets[srcIP], udp.Payload)
 	}
 
