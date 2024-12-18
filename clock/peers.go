@@ -40,7 +40,7 @@ func NewOriginSample(t1, t2, t3, t4, p float64) *OriginSample {
 	}
 }
 
-func NewPeer(samples []*OriginSample, ip string, ts float64) *Peer {
+func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts float64) *Peer {
 	if len(samples) < 2 {
 		return nil
 	}
@@ -66,6 +66,6 @@ func NewPeer(samples []*OriginSample, ip string, ts float64) *Peer {
 		Delay:        delay0,
 		Dispersion:   epsilon,
 		Jitter:       jitter,
-		RootDistance: delay0/2 + epsilon,
+		RootDistance: (delay0+rootDelay)/2 + epsilon + rootDispersion + jitter,
 	}
 }
