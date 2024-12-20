@@ -17,12 +17,14 @@ type OriginSample struct {
 }
 
 type Peer struct {
-	IP           string
-	Offset       float64
-	Delay        float64
-	Dispersion   float64
-	Jitter       float64
-	RootDistance float64
+	IP             string
+	Offset         float64
+	Delay          float64
+	RootDelay      float64
+	Dispersion     float64
+	RootDispersion float64
+	Jitter         float64
+	RootDistance   float64
 }
 
 func NewOriginSample(t1, t2, t3, t4, p float64) *OriginSample {
@@ -61,11 +63,13 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 	}
 	jitter := math.Sqrt(psi) / float64(len(samples)-1)
 	return &Peer{
-		IP:           ip,
-		Offset:       offset0,
-		Delay:        delay0,
-		Dispersion:   epsilon,
-		Jitter:       jitter,
-		RootDistance: (delay0+rootDelay)/2 + epsilon + rootDispersion + jitter,
+		IP:             ip,
+		Offset:         offset0,
+		Delay:          delay0,
+		RootDelay:      rootDelay,
+		Dispersion:     epsilon,
+		RootDispersion: rootDispersion,
+		Jitter:         jitter,
+		RootDistance:   (delay0+rootDelay)/2 + epsilon + rootDispersion + jitter,
 	}
 }
