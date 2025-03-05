@@ -96,25 +96,18 @@ func TestInsert(t *testing.T) {
 		t.Error("info is nil")
 		return
 	}
-	db, err := sql.Open("mysql", "root:liuyilun134@tcp(127.0.0.1:3306)/nts?charset=utf8")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer func() {
-		_ = db.Close()
-	}()
 
-	err = insertServerInfo(db, "127.0.0.1", info)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	err = insertKeyTimestamps(db, "127.0.0.1", info)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	UseDBConnection(func(db *sql.DB) error {
+		err := insertServerInfo(db, "127.0.0.1", info)
+		if err != nil {
+			return err
+		}
+		err = insertKeyTimestamps(db, "127.0.0.1", info)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func TestAdjustTime(t *testing.T) {
