@@ -81,6 +81,13 @@ func DialNTSKE(host, serverName string, aeadID byte) (*datastruct.NTSPayload, er
 	if len(certs) > 0 {
 		cert := certs[0]
 		commonName := cert.Subject.CommonName
+		// 若 CN 为空则提取 SAN
+		if commonName == "" {
+			sanList := cert.DNSNames
+			if len(sanList) > 0 {
+				commonName = sanList[0]
+			}
+		}
 		res.CertDomain = commonName
 		res.RightIP = checkDNS(res.CertDomain, host)
 		res.Expired = time.Now().After(cert.NotAfter)

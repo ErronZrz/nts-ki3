@@ -26,12 +26,12 @@ type OffsetServerInfo struct {
 	Server          string
 	Port            string
 	PacketLen       map[byte]int
-	TTLs            map[byte]int
 	Strata          map[byte]int
 	Polls           map[byte]int
 	Precisions      map[byte]int
 	RootDelays      map[byte][]byte
 	RootDispersions map[byte][]byte
+	References      map[byte][][]byte
 	T1              map[byte]time.Time
 	T2              map[byte]time.Time
 	T3              map[byte]time.Time
@@ -48,7 +48,6 @@ func NewOffsetServerInfo(ip string) *OffsetServerInfo {
 		Server:          ip,
 		Port:            "123",
 		PacketLen:       make(map[byte]int),
-		TTLs:            make(map[byte]int),
 		Strata:          make(map[byte]int),
 		Polls:           make(map[byte]int),
 		Precisions:      make(map[byte]int),

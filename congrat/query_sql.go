@@ -1,11 +1,26 @@
 package congrat
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+)
 
 func MaxID(db *sql.DB) (int64, error) {
 	var id int64
 	err := db.QueryRow("SELECT MAX(id) FROM ke_key_timestamp").Scan(&id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return -1, nil
+	}
 	return id, err
+}
+
+func MaxBatchID(db *sql.DB) (int64, error) {
+	var batchID int64
+	err := db.QueryRow("SELECT MAX(batch_id) FROM ke_key_timestamp").Scan(&batchID)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return -1, nil
+	}
+	return batchID, err
 }
 
 func fetchRecords(db *sql.DB) (map[string]map[byte]*IPTimestamps, error) {

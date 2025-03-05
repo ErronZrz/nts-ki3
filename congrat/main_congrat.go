@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+var (
+	CurrentBatchID int64
+)
+
 func MainFunction(path string, maxCoroutines int) error {
 	// 打开文件
 	file, err := os.Open(path)
