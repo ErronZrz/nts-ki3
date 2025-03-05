@@ -98,6 +98,11 @@ func GetTimestamp(t time.Time) []byte {
 	return res
 }
 
+func RootDelayToValue(data []byte) float64 {
+	val := binary.BigEndian.Uint32(data)
+	return float64(val) / (1 << 16)
+}
+
 func VariableData() []byte {
 	timestamp := GetTimestamp(GlobalNowTime())
 	copy(variableData[40:], timestamp)

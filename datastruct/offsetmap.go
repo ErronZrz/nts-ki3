@@ -31,7 +31,7 @@ type OffsetServerInfo struct {
 	Precisions      map[byte]int
 	RootDelays      map[byte][]byte
 	RootDispersions map[byte][]byte
-	References      map[byte][][]byte
+	References      map[byte][]byte
 	T1              map[byte]time.Time
 	T2              map[byte]time.Time
 	T3              map[byte]time.Time
@@ -53,6 +53,7 @@ func NewOffsetServerInfo(ip string) *OffsetServerInfo {
 		Precisions:      make(map[byte]int),
 		RootDelays:      make(map[byte][]byte),
 		RootDispersions: make(map[byte][]byte),
+		References:      make(map[byte][]byte),
 		T1:              make(map[byte]time.Time),
 		T2:              make(map[byte]time.Time),
 		T3:              make(map[byte]time.Time),

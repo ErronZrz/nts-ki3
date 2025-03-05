@@ -32,6 +32,7 @@ func TestMainFunction(t *testing.T) {
 				return err
 			}
 		}
+
 		return nil
 	})
 }

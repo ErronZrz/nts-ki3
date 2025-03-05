@@ -212,6 +212,7 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 	info.Precisions[aeadID] = int(int8(buf[3]))
 	info.RootDelays[aeadID] = buf[4:8]
 	info.RootDispersions[aeadID] = buf[8:12]
+	info.References[aeadID] = buf[12:16]
 	// 记录时间戳
 	info.T4[aeadID] = utils.GlobalNowTime()
 	info.Timestamps[aeadID] = buf[24:48]

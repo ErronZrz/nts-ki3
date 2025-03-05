@@ -6,6 +6,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.0
 	github.com/google/gopacket v1.1.19
 	github.com/lionsoul2014/ip2region/binding/golang v0.0.0-20240307020853-f8f5f687e6a2
+	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/secure-io/siv-go v0.0.0-20180922214919-5ff40651e2c4
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
@@ -28,7 +29,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/oschwald/geoip2-golang v1.11.0 // indirect
 	github.com/oschwald/maxminddb-golang v1.13.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
