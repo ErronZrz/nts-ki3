@@ -12,8 +12,8 @@ var data []*Peer
 func init() {
 	data = make([]*Peer, 100)
 	avgOffset := -0.3
-	avgDelay := 0.4
-	avgRootDelay := 0.4
+	avgDelay := 0.1
+	avgRootDelay := 0.2
 	avgDispersion := 0.1
 	avgRootDispersion := 0.2
 	avgJitter := 0.04

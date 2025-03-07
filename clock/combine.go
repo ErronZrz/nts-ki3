@@ -25,7 +25,7 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemResult {
 		w := 1.0 / p.RootDistance
 		totalWeight += w
 		offset += w * p.Offset
-		peerJitter += w * (p.Offset - sysPeer.Offset)
+		peerJitter += w * math.Pow(p.Offset-sysPeer.Offset, 2)
 	}
 	offset /= totalWeight
 	jitter := math.Sqrt(math.Pow(selectionJitter, 2) + peerJitter/totalWeight)

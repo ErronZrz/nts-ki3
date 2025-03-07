@@ -44,6 +44,9 @@ func SelectPeers(peers []*Peer, minCandidates int, strict bool) []*Peer {
 	return res
 }
 
+// SelectSamples 使用三点排序法筛选至少 minCandidates 数量的 truechimers
+// 其中 strict 为 true 时，严格要求样本偏差值在 [low, high] 区间内
+// 当 strict 为 false 时，只需偏差值的浮动范围与 [low, high] 区间有交集即可
 func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample {
 	n := len(samples)
 	if n < minCandidates {
@@ -68,9 +71,11 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 	sort.Slice(extended, func(i, j int) bool {
 		return extended[i].realValue() < extended[j].realValue()
 	})
-	var count, crossMid int
-	var low, high float64
-	var meet bool
+	var (
+		count, crossMid int
+		low, high       float64
+		meet            bool
+	)
 	for nFake := 0; nFake < n/2; nFake++ {
 		count, crossMid = 0, 0
 		for _, s := range extended {

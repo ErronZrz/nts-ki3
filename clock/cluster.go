@@ -13,7 +13,8 @@ func ClusterAlgorithm(peers []*Peer, maxSurvivors int) (survivors []*Peer, selec
 	}
 	for {
 		var maxSelectionJitterIP string
-		selectionJitter, minJitter := math.Inf(-1), math.Inf(1)
+		selectionJitter = math.Inf(-1)
+		minJitter := math.Inf(1)
 		for _, peer := range ip2peer {
 			ip2peer[peer.IP] = peer
 			minJitter = math.Min(minJitter, peer.Jitter)
