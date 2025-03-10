@@ -98,6 +98,13 @@ func GetTimestamp(t time.Time) []byte {
 	return res
 }
 
+func TimestampValue(timestamp []byte) float64 {
+	intPart := binary.BigEndian.Uint32(timestamp[:4])
+	fracPart := binary.BigEndian.Uint32(timestamp[4:])
+
+	return float64(intPart) + float64(fracPart)/float64(1<<32)
+}
+
 func RootDelayToValue(data []byte) float64 {
 	val := binary.BigEndian.Uint32(data)
 	return float64(val) / (1 << 16)

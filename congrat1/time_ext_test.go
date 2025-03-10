@@ -1,4 +1,4 @@
-package congrat
+package congrat1
 
 import (
 	"fmt"

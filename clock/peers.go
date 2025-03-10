@@ -43,7 +43,8 @@ func NewOriginSample(t1, t2, t3, t4, p float64) *OriginSample {
 }
 
 func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts float64) *Peer {
-	if len(samples) < 2 {
+	// 删除了之前 len(samples) >= 2 的限制，也就是说一个样本也能算，笑死
+	if len(samples) == 0 {
 		return nil
 	}
 	slices.SortFunc(samples, func(s1, s2 *OriginSample) int {
@@ -61,7 +62,12 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 		epsilon += weight * (s.Dispersion + PHI*(ts-s.T4))
 		psi += math.Pow(s.Offset-offset0, 2)
 	}
-	jitter := math.Sqrt(psi) / float64(len(samples)-1)
+	var jitter float64
+	if len(samples) > 1 {
+		jitter = math.Sqrt(psi) / float64(len(samples)-1)
+	} else {
+		jitter = math.Abs(offset0 * (delay0 + rootDelay) / 4)
+	}
 	return &Peer{
 		IP:             ip,
 		Offset:         offset0,

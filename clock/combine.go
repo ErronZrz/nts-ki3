@@ -5,11 +5,11 @@ import (
 	"slices"
 )
 
-type SystemResult struct {
+type SystemClock struct {
 	Offset, Jitter, RootDelay, RootDispersion float64
 }
 
-func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemResult {
+func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemClock {
 	slices.SortFunc(peers, func(a, b *Peer) int {
 		if a.RootDistance < b.RootDistance {
 			return -1
@@ -34,7 +34,7 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemResult {
 	// 理论上这里还需要加一个 PHI * (t4 - t4')，但是太麻烦了先不加
 	rootDispersion += math.Abs(offset)
 
-	return &SystemResult{
+	return &SystemClock{
 		Offset:         offset,
 		Jitter:         jitter,
 		RootDelay:      rootDelay,
