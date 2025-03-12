@@ -81,7 +81,7 @@ func executeNTP(db *sql.DB, ke *KeKeyTimestamp, aeadID int) error {
 }
 
 func queryPort(db *sql.DB, ke *KeKeyTimestamp) error {
-	query := `SELECT ntpv4_address, ntpv4_port FROM ke_servers WHERE ip_address = '?' ORDER BY id DESC LIMIT 1;`
+	query := `SELECT ntpv4_address, ntpv4_port FROM ke_servers WHERE ip_address = ? ORDER BY id DESC LIMIT 1;`
 	rows, err := db.Query(query, ke.IPAddress)
 	if err != nil {
 		return err

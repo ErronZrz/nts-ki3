@@ -3,6 +3,7 @@ package congrat2
 import (
 	"active/clock"
 	"active/utils"
+	"fmt"
 )
 
 const (
@@ -30,7 +31,15 @@ func getPeers(servers []*KeKeyTimestamp) []*clock.Peer {
 }
 
 func whatsoever(peers []*clock.Peer, minCandidates, maxSurvivors int) {
+	fmt.Println(len(peers))
+	fmt.Println(peers)
 	truechimers := clock.SelectPeers(peers, minCandidates, false)
+	fmt.Println(len(truechimers))
+	fmt.Println(truechimers)
 	survivors, selectionJitter := clock.ClusterAlgorithm(truechimers, maxSurvivors)
+	fmt.Println(selectionJitter)
+	fmt.Println(len(survivors))
+	fmt.Println(survivors)
 	GlobalSystemClock = clock.CombineAlgorithm(survivors, selectionJitter)
+	fmt.Println(GlobalSystemClock)
 }

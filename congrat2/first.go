@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var GlobalSystemClock *clock.SystemClock = new(clock.SystemClock)
+var GlobalSystemClock = new(clock.SystemClock)
 
 // KeKeyTimestamp 结构体定义
 type KeKeyTimestamp struct {
@@ -87,6 +87,10 @@ func Initialize(db *sql.DB, m0, truechimerNum, survivorNum int) error {
 			return err
 		}
 	}
+	// 4. 生成对等体信息
+	peers := getPeers(selected)
+	// 5. 选出 truechimers、聚类、合并
+	whatsoever(peers, truechimerNum, survivorNum)
 	return nil
 }
 
