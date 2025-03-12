@@ -11,13 +11,14 @@ import (
 	"time"
 )
 
-func executeNTP(db *sql.DB, ke *KeKeyTimestamp, aeadID int) error {
-	udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", ke.NTPv4Address, ke.NTPv4Port))
+func executeNTP(ke *KeKeyTimestamp, aeadID int) error {
+	udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s: %d", ke.NTPv4Address, ke.NTPv4Port))
 	if err != nil {
 		return err
 	}
 	// 生成请求数据
 	var req []byte
+	var singleLen int
 	if aeadID == 0 {
 		req = utils.SecData()
 	} else {
@@ -26,9 +27,9 @@ func executeNTP(db *sql.DB, ke *KeKeyTimestamp, aeadID int) error {
 		if eightLen == 0 {
 			return errors.New("no cookie")
 		}
-		singleLen := eightLen / 8
+		singleLen = eightLen / 8
 		if singleLen*8 != eightLen {
-			return errors.New("cookie length error")
+			return fmt.Errorf("cookie length error: %d", eightLen)
 		}
 		req, err = nts.GenerateSecureNTPRequest(ke.C2SKey, ke.Cookies[:singleLen])
 		ke.Cookies = ke.Cookies[singleLen:]
@@ -65,7 +66,8 @@ func executeNTP(db *sql.DB, ke *KeKeyTimestamp, aeadID int) error {
 		if err != nil {
 			return err
 		}
-		ke.Cookies = append(ke.Cookies, cookieBuf.Bytes()...)
+		ke.Cookies = append(ke.Cookies, cookieBuf.Bytes()[:singleLen]...)
+		fmt.Printf("total cookies length after regain: %d\n", len(ke.Cookies))
 	}
 	// 记录 NTP 字段
 	ke.Stratum = int(buf[1])

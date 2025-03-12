@@ -1,7 +1,10 @@
 package clock
 
 import (
+	"active/congrat1"
+	"bufio"
 	"fmt"
+	"os"
 	"sort"
 )
 
@@ -26,6 +29,11 @@ func NewSample(peer *Peer) *Sample {
 
 func SelectPeers(peers []*Peer, minCandidates int, strict bool) []*Peer {
 	n := len(peers)
+	path := fmt.Sprintf("C:\\Corner\\TMP\\BisheData\\samples\\%d.txt", congrat1.CurrentBatchID)
+	err := writePeers(path, peers)
+	if err != nil {
+		fmt.Printf("error writing to file: %v", err)
+	}
 	ip2peer := make(map[string]*Peer)
 	samples := make([]*Sample, n)
 	for i, peer := range peers {
@@ -101,7 +109,7 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 			}
 		}
 		if (!strict || crossMid <= nFake) && low < high {
-			fmt.Printf("nFake=%d ", nFake)
+			fmt.Printf("nFake=%d\n", nFake)
 			meet = true
 			break
 		}
@@ -123,4 +131,20 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 		return nil
 	}
 	return res
+}
+
+func writePeers(path string, peers []*Peer) error {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Close() }()
+	writer := bufio.NewWriter(file)
+	for _, peer := range peers {
+		_, err = writer.WriteString(fmt.Sprintf("%.10f\t%.10f\n", peer.Offset, peer.RootDistance))
+		if err != nil {
+			return err
+		}
+	}
+	return writer.Flush()
 }

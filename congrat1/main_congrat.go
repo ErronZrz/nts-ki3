@@ -143,21 +143,6 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 		errCh <- err
 		return
 	}
-	// 生成请求数据
-	var req, s2c []byte
-	if aeadID == 0 {
-		req = utils.SecData()
-	} else {
-		info.RLock()
-		c2s, cookie := info.C2SKeyMap[aeadID], info.CookieMap[aeadID][0]
-		s2c = info.S2CKeyMap[aeadID]
-		info.RUnlock()
-		req, err = nts.GenerateSecureNTPRequest(c2s, cookie)
-		if err != nil {
-			errCh <- err
-			return
-		}
-	}
 	// 建立连接
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	if err != nil {
@@ -165,12 +150,23 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 		return
 	}
 	defer func() { _ = conn.Close() }()
-	// 写数据
-	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
+	// 生成请求数据，并消耗 Cookie
+	var req, s2c []byte
+	var cookieLen int
 	info.Lock()
-	// 这里可能会导致对于普通 NTP RealT1 与 T1 不同，但是后面补上了相关赋值，所以不影响
-	info.RealT1[aeadID] = utils.GlobalNowTime()
-	if aeadID != 0 {
+	if aeadID == 0 {
+		req = utils.SecData()
+	} else {
+		// info.RLock()
+		c2s, cookie := info.C2SKeyMap[aeadID], info.CookieMap[aeadID][0]
+		cookieLen = len(cookie)
+		s2c = info.S2CKeyMap[aeadID]
+		// info.RUnlock()
+		req, err = nts.GenerateSecureNTPRequest(c2s, cookie)
+		if err != nil {
+			errCh <- err
+			return
+		}
 		// 消耗一个 Cookie
 		info.CookieMap[aeadID] = info.CookieMap[aeadID][1:]
 		if len(info.CookieMap[aeadID]) == 0 {
@@ -178,7 +174,11 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 			info.C2SKeyMap[aeadID] = nil
 		}
 	}
+	// 这里可能会导致对于普通 NTP RealT1 与 T1 不同，但是后面补上了相关赋值，所以不影响
+	info.RealT1[aeadID] = utils.GlobalNowTime()
 	info.Unlock()
+	// 写数据
+	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
 	_, err = conn.Write(req)
 	if err != nil {
 		errCh <- err
@@ -201,7 +201,7 @@ func AsyncExecuteAEAD(aeadID byte, wg *sync.WaitGroup, errCh chan<- error, info 
 			return
 		}
 		info.Lock()
-		info.CookieMap[aeadID] = append(info.CookieMap[aeadID], cookieBuf.Bytes())
+		info.CookieMap[aeadID] = append(info.CookieMap[aeadID], cookieBuf.Bytes()[:cookieLen])
 		info.Unlock()
 	}
 	info.Lock()

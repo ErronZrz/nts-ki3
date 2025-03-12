@@ -43,7 +43,7 @@ type KeKeyTimestamp struct {
 	NTPv4Port      int
 }
 
-func Initialize(db *sql.DB, m0, truechimerNum, survivorNum int) error {
+func Initialize(db *sql.DB, m0, minCandidates, maxSurvivors int) error {
 	// 0. 更新批次
 	maxBatchID, err := congrat1.MaxBatchID(db)
 	if err != nil {
@@ -55,16 +55,10 @@ func Initialize(db *sql.DB, m0, truechimerNum, survivorNum int) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(len(serverList))
-	for _, server := range serverList {
-		fmt.Println(server)
-	}
+	fmt.Printf("server num: %d\n", len(serverList))
 	// 2. 以分数作为概率筛选 m0 台服务器
 	selected := selectRecordsByScoreProbability(serverList, m0)
-	fmt.Println(len(selected))
-	for _, server := range selected {
-		fmt.Println(server)
-	}
+	fmt.Printf("selected num: %d\n", len(selected))
 	// 3. 进行同步
 	for _, server := range selected {
 		err = queryPort(db, server)
@@ -75,7 +69,7 @@ func Initialize(db *sql.DB, m0, truechimerNum, survivorNum int) error {
 		if err != nil {
 			return err
 		}
-		err = executeNTP(db, server, 15)
+		err = executeNTP(server, 15)
 		if err != nil {
 			fmt.Println(err)
 			// 如果失败则标记失败
@@ -90,8 +84,9 @@ func Initialize(db *sql.DB, m0, truechimerNum, survivorNum int) error {
 	// 4. 生成对等体信息
 	peers := getPeers(selected)
 	// 5. 选出 truechimers、聚类、合并
-	whatsoever(peers, truechimerNum, survivorNum)
-	return nil
+	whatsoever(peers, minCandidates, maxSurvivors)
+	// 6. 更新可用性与分数
+	return congrat1.UpdateAvailabilityAndScore(db)
 }
 
 // 查询满足 aead_id=15 的最新记录

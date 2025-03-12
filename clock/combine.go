@@ -10,6 +10,10 @@ type SystemClock struct {
 }
 
 func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemClock {
+	if len(peers) == 0 {
+		panic("NO PEERS FOR COMBINATION!!!")
+	}
+
 	slices.SortFunc(peers, func(a, b *Peer) int {
 		if a.RootDistance < b.RootDistance {
 			return -1

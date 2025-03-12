@@ -76,6 +76,9 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 		Dispersion:     epsilon,
 		RootDispersion: rootDispersion,
 		Jitter:         jitter,
-		RootDistance:   (delay0+rootDelay)/2 + epsilon + rootDispersion + jitter,
+		// RootDistance 在 RFC 8915 里面一般是 LAMBDA = EPSILON + DELTA / 2
+		// 然而搜索 synchronization distance 的最后一个结果又加上了抖动，这就很难搞了
+		// 又考虑到目前的抖动计算不太规范，所以就先去掉
+		RootDistance: (delay0+rootDelay)/2 + epsilon + rootDispersion,
 	}
 }

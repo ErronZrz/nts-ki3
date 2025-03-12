@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/binary"
-	"errors"
+	"fmt"
 	"github.com/secure-io/siv-go"
 )
 
@@ -46,10 +46,16 @@ func GenerateSecureNTPRequest(c2s, cookie []byte) ([]byte, error) {
 // ValidateResponse 解析并验证 NTS 服务器响应
 func ValidateResponse(data, s2c []byte, cookieBuf *bytes.Buffer) error {
 	if len(data) < 160 {
-		return errors.New("data length is too short")
+		return fmt.Errorf("data length is too short: %d", len(data))
 	}
+	// AD 包括 header 的 48 字节和 Unique Identifier 的 36 字节
 	ad := make([]byte, 84)
 	copy(ad, data)
+	// data[84][85] 是 Authenticator EF 标识，通常是 0x0404
+	// data[86][87] 是 Authenticator EF 长度
+	// data[88][89] 是 Nonce 长度，通常为 16
+	// data[90][91] 是 Ciphertext 长度
+	// data[92:108] 是 Nonce
 	cipherLen := 256*int(data[90]) + int(data[91])
 	nonce := make([]byte, 16)
 	copy(nonce, data[92:])
