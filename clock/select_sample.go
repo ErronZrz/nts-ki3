@@ -109,7 +109,7 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 			}
 		}
 		if (!strict || crossMid <= nFake) && low < high {
-			fmt.Printf("nFake=%d\n", nFake)
+			fmt.Printf("nFake = %d\n", nFake)
 			meet = true
 			break
 		}

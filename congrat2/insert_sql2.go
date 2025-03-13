@@ -6,13 +6,13 @@ import (
 	"fmt"
 )
 
-func insertServerInfo2(db *sql.DB, ke *KeKeyTimestamp) error {
+func insertServerInfoSimple(db *sql.DB, ke *KeKeyTimestamp, reserved string) error {
 	query := `INSERT INTO ke_servers (batch_id, ip_address, domain_name, cert_org, cert_issuer, 
         ntpv4_address, ntpv4_port, domain_matches_ip, cert_not_expired, cert_not_self_signed, 
         cert_not_before, cert_not_after, created_at, updated_at)
-        VALUES (?, ?, 'INIT', 'INIT', 'INIT', ?, ?, TRUE, TRUE, TRUE, NOW(), NOW(), NOW(), NOW())`
+        VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, TRUE, TRUE, NOW(), NOW(), NOW(), NOW())`
 
-	_, err := db.Exec(query, congrat1.CurrentBatchID, ke.IPAddress, ke.NTPv4Address, ke.NTPv4Port)
+	_, err := db.Exec(query, congrat1.CurrentBatchID, ke.IPAddress, reserved, reserved, reserved, ke.NTPv4Address, ke.NTPv4Port)
 	// fmt.Println(adjustTime(ke.NotBefore), adjustTime(ke.NotAfter))
 	if err != nil {
 		return fmt.Errorf("error inserting server info: %v", err)

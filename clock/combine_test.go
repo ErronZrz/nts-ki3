@@ -6,8 +6,8 @@ import (
 )
 
 func TestCombineAlgorithm(t *testing.T) {
-	maxSurvivors := 40
-	result, sj := ClusterAlgorithm(data, maxSurvivors)
+	minSurvivors := 3
+	result, sj := ClusterAlgorithm(data, minSurvivors)
 	for _, p := range result {
 		fmt.Printf("%+v\n", p)
 	}

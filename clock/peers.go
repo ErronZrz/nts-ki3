@@ -1,6 +1,7 @@
 package clock
 
 import (
+	"fmt"
 	"math"
 	"slices"
 )
@@ -66,8 +67,9 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 	if len(samples) > 1 {
 		jitter = math.Sqrt(psi) / float64(len(samples)-1)
 	} else {
-		jitter = math.Abs(offset0 * (delay0 + rootDelay) / 4)
+		jitter = math.Abs(delay0+rootDelay) / 4
 	}
+	fmt.Printf("sample num = %d, jitter = %.10f\n", len(samples), jitter)
 	return &Peer{
 		IP:             ip,
 		Offset:         offset0,

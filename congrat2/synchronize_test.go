@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestInitialize(t *testing.T) {
+func TestSynchronizeOnce(t *testing.T) {
 	congrat1.UseDBConnection(func(db *sql.DB) error {
-		return Initialize(db, 40, 20, 30)
+		return SynchronizeOnce(db, 20, 10, 3)
 	})
 }

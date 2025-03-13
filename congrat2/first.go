@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-var GlobalSystemClock = new(clock.SystemClock)
-
 // KeKeyTimestamp 结构体定义
 type KeKeyTimestamp struct {
 	ID             int
@@ -43,7 +41,7 @@ type KeKeyTimestamp struct {
 	NTPv4Port      int
 }
 
-func Initialize(db *sql.DB, m0, minCandidates, maxSurvivors int) error {
+func Initialize(db *sql.DB, m0, minCandidates, minSurvivors int) error {
 	// 0. 更新批次
 	maxBatchID, err := congrat1.MaxBatchID(db)
 	if err != nil {
@@ -55,17 +53,17 @@ func Initialize(db *sql.DB, m0, minCandidates, maxSurvivors int) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("server num: %d\n", len(serverList))
+	fmt.Printf("server num = %d\n", len(serverList))
 	// 2. 以分数作为概率筛选 m0 台服务器
-	selected := selectRecordsByScoreProbability(serverList, m0)
-	fmt.Printf("selected num: %d\n", len(selected))
+	selected := selectRecordsByScoreProbability(serverList, m0, make(map[string]bool))
+	fmt.Printf("selected num = %d\n", len(selected))
 	// 3. 进行同步
 	for _, server := range selected {
 		err = queryPort(db, server)
 		if err != nil {
 			return err
 		}
-		err = insertServerInfo2(db, server)
+		err = insertServerInfoSimple(db, server, "INIT")
 		if err != nil {
 			return err
 		}
@@ -82,9 +80,9 @@ func Initialize(db *sql.DB, m0, minCandidates, maxSurvivors int) error {
 		}
 	}
 	// 4. 生成对等体信息
-	peers := getPeers(selected)
+	peers := getPeers(selected, make(map[string]*clock.OriginSample))
 	// 5. 选出 truechimers、聚类、合并
-	whatsoever(peers, minCandidates, maxSurvivors)
+	whatsoever(peers, minCandidates, minSurvivors)
 	// 6. 更新可用性与分数
 	return congrat1.UpdateAvailabilityAndScore(db)
 }
@@ -126,7 +124,7 @@ func getLatestRecordsByAEADID(db *sql.DB, aeadID int) ([]*KeKeyTimestamp, error)
 }
 
 // 选取 m 条记录，概率正比于 Score
-func selectRecordsByScoreProbability(records []*KeKeyTimestamp, m int) []*KeKeyTimestamp {
+func selectRecordsByScoreProbability(records []*KeKeyTimestamp, m int, unwanted map[string]bool) []*KeKeyTimestamp {
 	if len(records) == 0 || m <= 0 {
 		return nil
 	}
@@ -147,7 +145,6 @@ func selectRecordsByScoreProbability(records []*KeKeyTimestamp, m int) []*KeKeyT
 
 	// 进行加权随机选择
 	selected := make([]*KeKeyTimestamp, 0, m)
-	selectedSet := make(map[int]bool)
 
 	for len(selected) < m {
 		r := rng.Float64() * totalScore
@@ -155,10 +152,17 @@ func selectRecordsByScoreProbability(records []*KeKeyTimestamp, m int) []*KeKeyT
 		index := sort.Search(n, func(i int) bool {
 			return prefixSums[i] >= r
 		})
+		server := records[index]
+		ref := server.Reference
+		refString := fmt.Sprintf("%d.%d.%d.%d", ref[0], ref[1], ref[2], ref[3])
 
-		if !selectedSet[records[index].ID] {
-			selected = append(selected, records[index])
-			selectedSet[records[index].ID] = true
+		if !unwanted[server.IPAddress] && !unwanted[refString] {
+			selected = append(selected, server)
+			unwanted[server.IPAddress] = true
+			// 这里思考了一下还是不添加 refString 了，先选了爸爸不再选儿子，但是先选了儿子还是允许选爸爸的
+			// unwanted[refString] = true
+		} else if unwanted[refString] {
+			fmt.Printf("Already chosen reference %s of server %s\n", refString, server.IPAddress)
 		}
 	}
 

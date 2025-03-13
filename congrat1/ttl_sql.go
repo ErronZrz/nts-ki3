@@ -116,7 +116,7 @@ func calculateScore(stratum, ttl int, availability float64, rootDelay, rootDispe
 	}
 	hopsFactor := math.Pow(0.95, float64(hops-1)/100)
 	score := 100 * availabilityFactor * stratumFactor * rootDistanceFactor * hopsFactor
-	fmt.Printf("ava: %.2f, str: %.2f, rd: %.2f, hop: %.2f, total: %.2f\n",
+	fmt.Printf("ava = %.2f, str = %.2f, rd = %.2f, hop = %.2f, total = %.2f\n",
 		availabilityFactor, stratumFactor, rootDistanceFactor, hopsFactor, score)
 	return math.Max(50, score)
 }

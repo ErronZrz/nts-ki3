@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func ClusterAlgorithm(peers []*Peer, maxSurvivors int) (survivors []*Peer, selectionJitter float64) {
+func ClusterAlgorithm(peers []*Peer, minSurvivors int) (survivors []*Peer, selectionJitter float64) {
 	n := len(peers)
 	ip2peer := make(map[string]*Peer)
 	for _, peer := range peers {
@@ -32,13 +32,12 @@ func ClusterAlgorithm(peers []*Peer, maxSurvivors int) (survivors []*Peer, selec
 				maxSelectionJitterIP = peer.IP
 			}
 		}
-		fmt.Printf("remnant: %d, selectionJitter: %.5f, minJitter: %.5f\n", len(ip2peer), selectionJitter, minJitter)
-		// 存活数量过多，或选择抖动最大值大于最小抖动，则踢出
-		if len(ip2peer) > maxSurvivors || selectionJitter > minJitter {
-			delete(ip2peer, maxSelectionJitterIP)
-		} else {
+		fmt.Printf("remnant: %d, selectionJitter = %.10f, minJitter = %.10f\n", len(ip2peer), selectionJitter, minJitter)
+		// 存活数量已达到下限，或者选择抖动最大值小于最小抖动，则完成聚类，否则踢出
+		if len(ip2peer) <= minSurvivors || selectionJitter <= minJitter {
 			break
 		}
+		delete(ip2peer, maxSelectionJitterIP)
 	}
 	for _, peer := range peers {
 		if _, ok := ip2peer[peer.IP]; ok {
