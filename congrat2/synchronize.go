@@ -30,7 +30,7 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("last s num = %d\n", len(survivors))
+	fmt.Printf("last survivor num = %d\n", len(survivors))
 	// 3. 以分数作为概率筛选 m 台服务器，并且将队列中的服务器加入到排除列表
 	selected := selectRecordsByScoreProbability(serverList, m, survivorIPMap)
 	fmt.Printf("selected num = %d\n", len(selected))
