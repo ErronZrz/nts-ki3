@@ -26,6 +26,7 @@ type Peer struct {
 	RootDispersion float64
 	Jitter         float64
 	RootDistance   float64
+	RttError       float64
 }
 
 func NewOriginSample(t1, t2, t3, t4, p float64) *OriginSample {
@@ -49,14 +50,19 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 		return nil
 	}
 	slices.SortFunc(samples, func(s1, s2 *OriginSample) int {
-		if s1.Delay < s2.Delay {
+		// 原先的排序方式是按照 Delay 从小到大，但是我觉得这完全不合理，所以改成按照时间从大到小
+		if s1.T1 > s2.T1 {
 			return -1
 		}
 		return 1
 	})
 	offset0 := samples[0].Offset
 	delay0 := samples[0].Delay
-	var epsilon, psi float64
+	var epsilon, psi, rttError float64
+	// 计算 RTT 对称性误差
+	if len(samples) == 2 {
+		rttError = math.Abs(samples[0].Delay-samples[1].Delay) / 2
+	}
 	weight := 1.0
 	for _, s := range samples {
 		weight /= 2
@@ -82,5 +88,6 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 		// 然而搜索 synchronization distance 的最后一个结果又加上了抖动，这就很难搞了
 		// 又考虑到目前的抖动计算不太规范，所以就先去掉
 		RootDistance: (delay0+rootDelay)/2 + epsilon + rootDispersion,
+		RttError:     rttError,
 	}
 }

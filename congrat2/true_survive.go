@@ -27,16 +27,16 @@ func getPeers(servers []*KeKeyTimestamp, survivorSamples map[string]*clock.Origi
 		rootDelay := utils.RootDelayToValue(server.RootDelay)
 		rootDispersion := utils.RootDelayToValue(server.RootDispersion)
 		now := utils.TimestampValue(utils.GetTimestamp(utils.GlobalNowTime()))
-		sample := []*clock.OriginSample{clock.NewOriginSample(t1, t2, t3, t4, BaseDispersion)}
+		samples := []*clock.OriginSample{clock.NewOriginSample(t1, t2, t3, t4, BaseDispersion)}
 		if former, ok := survivorSamples[server.IPAddress]; ok {
-			sample = append(sample, former)
+			samples = append(samples, former)
 		}
-		peers = append(peers, clock.NewPeer(sample, server.IPAddress, rootDelay, rootDispersion, now))
+		peers = append(peers, clock.NewPeer(samples, server.IPAddress, rootDelay, rootDispersion, now))
 	}
 	return peers
 }
 
-func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int) {
+func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int, useKalman bool) {
 	fmt.Printf("len(peers): %d\n", len(peers))
 	// 筛选 truechimers
 	truechimers := clock.SelectPeers(peers, minCandidates, false)
@@ -46,11 +46,15 @@ func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int) {
 	fmt.Printf("selectionJitter = %.10f\n", selectionJitter)
 	fmt.Printf("len(survivors) = %d\n", len(survivors))
 	// 组合时钟
-	newSystemClock := clock.CombineAlgorithm(survivors, selectionJitter)
+	newSystemClock := clock.CombineAlgorithm(survivors, selectionJitter, useKalman)
 	// 打印全局变量
-	fmt.Printf("Offset = %.10f -> %.10f\nJitter = %.10f -> %.10f\nRootDelay = %.10f -> %.10f\nRootDispersion = %.10f -> %.10f\n",
-		clock.GlobalSystemClock.Offset, newSystemClock.Offset, clock.GlobalSystemClock.Jitter, newSystemClock.Jitter,
-		clock.GlobalSystemClock.RootDelay, newSystemClock.RootDelay, clock.GlobalSystemClock.RootDispersion, newSystemClock.RootDispersion)
+	fmt.Printf("Offset = %.10f -> %.10f\nJitter = %.10f -> %.10f\nRootDelay = %.10f -> %.10f\n"+
+		"RootDispersion = %.10f -> %.10f\nPPrev =  %.10f -> %.10f\n",
+		clock.GlobalSystemClock.Offset, newSystemClock.Offset,
+		clock.GlobalSystemClock.Jitter, newSystemClock.Jitter,
+		clock.GlobalSystemClock.RootDelay, newSystemClock.RootDelay,
+		clock.GlobalSystemClock.RootDispersion, newSystemClock.RootDispersion,
+		clock.GlobalSystemClock.PPrev, newSystemClock.PPrev)
 	clock.GlobalSystemClock = newSystemClock
 	// 以批次号作为文件名，写入文件
 	path := fmt.Sprintf("C:\\Corner\\TMP\\BisheData\\clock\\%d.txt", congrat1.CurrentBatchID)
@@ -72,9 +76,10 @@ func writeToFile(path string, survivors []*clock.Peer, selectionJitter float64) 
 	if err != nil {
 		return err
 	}
-	// 接下来几行分别是系统变量中的 Offset, Jitter, RootDelay, RootDispersion
-	_, err = writer.WriteString(fmt.Sprintf("%.10f\n%.10f\n%.10f\n%.10f\n",
-		clock.GlobalSystemClock.Offset, clock.GlobalSystemClock.Jitter, clock.GlobalSystemClock.RootDelay, clock.GlobalSystemClock.RootDispersion))
+	// 接下来几行分别是系统变量中的 Offset, Jitter, RootDelay, RootDispersion, PPrev
+	_, err = writer.WriteString(fmt.Sprintf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
+		clock.GlobalSystemClock.Offset, clock.GlobalSystemClock.Jitter, clock.GlobalSystemClock.RootDelay,
+		clock.GlobalSystemClock.RootDispersion, clock.GlobalSystemClock.PPrev))
 	if err != nil {
 		return err
 	}

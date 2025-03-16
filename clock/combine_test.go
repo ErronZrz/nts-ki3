@@ -12,7 +12,7 @@ func TestCombineAlgorithm(t *testing.T) {
 		fmt.Printf("%+v\n", p)
 	}
 
-	values := CombineAlgorithm(result, sj)
+	values := CombineAlgorithm(result, sj, false)
 	fmt.Printf("System Peer:\n%+v\n", result[0])
 	fmt.Printf("%+v\n", values)
 }

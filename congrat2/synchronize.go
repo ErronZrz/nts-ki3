@@ -30,21 +30,21 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("last survivor num = %d\n", len(survivors))
-	// 3. 记录这些 survivors 之前的四个时间戳，后面会使用
-	survivorSamples := make(map[string]*clock.OriginSample, len(survivors))
-	for _, survivor := range survivors {
-		t1 := utils.TimestampValue(survivor.T1)
-		t2 := utils.TimestampValue(survivor.T2)
-		t3 := utils.TimestampValue(survivor.T3)
-		t4 := utils.TimestampValue(survivor.T4)
-		survivorSamples[survivor.IPAddress] = clock.NewOriginSample(t1, t2, t3, t4, BaseDispersion)
-	}
-	// 4. 以分数作为概率筛选 m 台服务器，并且将队列中的服务器加入到排除列表
+	fmt.Printf("last s num = %d\n", len(survivors))
+	// 3. 以分数作为概率筛选 m 台服务器，并且将队列中的服务器加入到排除列表
 	selected := selectRecordsByScoreProbability(serverList, m, survivorIPMap)
 	fmt.Printf("selected num = %d\n", len(selected))
-	// 5. 合并两个列表，然后进行同步
+	// 4. 合并两个列表，记录所选服务器之前的 4 个时间戳，后面会使用
 	selected = append(selected, survivors...)
+	prevSamples := make(map[string]*clock.OriginSample, len(selected))
+	for _, s := range selected {
+		t1 := utils.TimestampValue(s.T1)
+		t2 := utils.TimestampValue(s.T2)
+		t3 := utils.TimestampValue(s.T3)
+		t4 := utils.TimestampValue(s.T4)
+		prevSamples[s.IPAddress] = clock.NewOriginSample(t1, t2, t3, t4, BaseDispersion)
+	}
+	// 5. 进行同步
 	for _, server := range selected {
 		err = queryPort(db, server)
 		if err != nil {
@@ -67,9 +67,9 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 		}
 	}
 	// 6. 生成对等体信息
-	peers := getPeers(selected, survivorSamples)
-	// 7. 选出 truechimers、聚类、合并
-	whatsoever(peers, minCandidates, minSurvivors)
+	peers := getPeers(selected, prevSamples)
+	// 7. 选出 truechimers、聚类、合并（使用 Kalman 滤波）
+	whatsoever(peers, minCandidates, minSurvivors, true)
 	// 8. 更新可用性与分数
 	return congrat1.UpdateAvailabilityAndScore(db)
 }
@@ -84,9 +84,9 @@ func readLastSurvivors(path string, serverList []*KeKeyTimestamp) (error, map[st
 	scanner := bufio.NewScanner(file)
 	// 现在貌似用不到选择抖动，所以就不读取了
 	_ = scanner.Scan()
-	// 读取四个系统变量
-	floats := make([]float64, 4)
-	for i := 0; i < 4; i++ {
+	// 读取 5 个系统变量
+	floats := make([]float64, 5)
+	for i := 0; i < 5; i++ {
 		_ = scanner.Scan()
 		floats[i], err = strconv.ParseFloat(scanner.Text(), 64)
 		if err != nil {
@@ -98,6 +98,7 @@ func readLastSurvivors(path string, serverList []*KeKeyTimestamp) (error, map[st
 		Jitter:         floats[1],
 		RootDelay:      floats[2],
 		RootDispersion: floats[3],
+		PPrev:          floats[4],
 	}
 	// 读取 survivors 数量
 	_ = scanner.Scan()

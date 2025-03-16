@@ -8,6 +8,6 @@ import (
 
 func TestInitialize(t *testing.T) {
 	congrat1.UseDBConnection(func(db *sql.DB) error {
-		return Initialize(db, 40, 20, 30)
+		return Initialize(db, 40, 5, 3)
 	})
 }

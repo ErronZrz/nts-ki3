@@ -1,17 +1,18 @@
 package clock
 
 import (
+	"fmt"
 	"math"
 	"slices"
 )
 
 type SystemClock struct {
-	Offset, Jitter, RootDelay, RootDispersion float64
+	Offset, Jitter, RootDelay, RootDispersion, PPrev float64
 }
 
 var GlobalSystemClock = new(SystemClock)
 
-func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemClock {
+func CombineAlgorithm(peers []*Peer, selectionJitter float64, useKalman bool) *SystemClock {
 	if len(peers) == 0 {
 		panic("NO PEERS FOR COMBINATION!!!")
 	}
@@ -23,7 +24,7 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemClock {
 		return 1
 	})
 
-	var totalWeight, peerJitter float64
+	var totalWeight, peerJitter, rttError float64
 	var offset float64
 	sysPeer := peers[0]
 	rootDelay := sysPeer.Delay + sysPeer.RootDelay
@@ -31,9 +32,16 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemClock {
 		w := 1.0 / p.RootDistance
 		totalWeight += w
 		offset += w * p.Offset
+		rttError += w * p.RttError
+		fmt.Printf("rttError += (%.10f * %.10f = %.10f)\n", w, p.RttError, w*p.RttError)
 		peerJitter += w * math.Pow(p.Offset-sysPeer.Offset, 2)
 	}
 	offset /= totalWeight
+	pNow := 1.0
+	if useKalman {
+		rttError /= totalWeight
+		offset, pNow = KalmanFilter(GlobalSystemClock.Offset, offset, GlobalSystemClock.PPrev, rttError)
+	}
 	jitter := math.Sqrt(math.Pow(selectionJitter, 2) + peerJitter/totalWeight)
 	rootDispersion := sysPeer.RootDispersion + sysPeer.Dispersion
 	rootDispersion += math.Sqrt(math.Pow(jitter, 2) + math.Pow(sysPeer.Jitter, 2))
@@ -47,5 +55,6 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64) *SystemClock {
 		Jitter:         jitter,
 		RootDelay:      rootDelay,
 		RootDispersion: rootDispersion,
+		PPrev:          pNow,
 	}
 }

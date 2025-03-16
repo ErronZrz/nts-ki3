@@ -81,8 +81,8 @@ func Initialize(db *sql.DB, m0, minCandidates, minSurvivors int) error {
 	}
 	// 4. 生成对等体信息
 	peers := getPeers(selected, make(map[string]*clock.OriginSample))
-	// 5. 选出 truechimers、聚类、合并
-	whatsoever(peers, minCandidates, minSurvivors)
+	// 5. 选出 truechimers、聚类、合并（不使用 Kalman 滤波）
+	whatsoever(peers, minCandidates, minSurvivors, false)
 	// 6. 更新可用性与分数
 	return congrat1.UpdateAvailabilityAndScore(db)
 }
