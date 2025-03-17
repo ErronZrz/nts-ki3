@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	BaseDispersion = 3e-6
-	FailFlag       = "FAILED"
+	BaseDispersion          = 3e-6
+	FailFlag                = "FAILED"
+	MinPanicEliminationRate = 0.05
+	MaxPanicKalmanGain      = 0.05
 )
 
 func getPeers(servers []*KeKeyTimestamp, survivorSamples map[string]*clock.OriginSample) []*clock.Peer {
@@ -39,22 +41,30 @@ func getPeers(servers []*KeKeyTimestamp, survivorSamples map[string]*clock.Origi
 func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int, useKalman bool) {
 	fmt.Printf("len(peers): %d\n", len(peers))
 	// 筛选 truechimers
-	truechimers := clock.SelectPeers(peers, minCandidates, false)
+	truechimers := clock.SelectPeers(peers, minCandidates, true)
 	fmt.Printf("len(truechimers) = %d\n", len(truechimers))
+	// 计算淘汰率
+	eliminationRate := 1.0 - float64(len(truechimers))/float64(len(peers))
 	// 聚类
 	survivors, selectionJitter := clock.ClusterAlgorithm(truechimers, minSurvivors)
 	fmt.Printf("selectionJitter = %.10f\n", selectionJitter)
 	fmt.Printf("len(survivors) = %d\n", len(survivors))
 	// 组合时钟
 	newSystemClock := clock.CombineAlgorithm(survivors, selectionJitter, useKalman)
+	// 如果满足两个条件：淘汰率超过阈值、卡尔曼增益低于阈值，则触发恐慌模式
+	if eliminationRate > MinPanicEliminationRate && clock.KalmanGain < MaxPanicKalmanGain {
+		fmt.Printf("PANIC MODE, elimination rate = %.1f%%, Kk = %.10f\n", eliminationRate*100, clock.KalmanGain)
+	}
 	// 打印全局变量
-	fmt.Printf("Offset = %.10f -> %.10f\nJitter = %.10f -> %.10f\nRootDelay = %.10f -> %.10f\n"+
-		"RootDispersion = %.10f -> %.10f\nPPrev =  %.10f -> %.10f\n",
+	fmt.Printf("Offset = %.10f -> %.10f\nCumsum = %.10f -> %.10f\nJitter = %.10f -> %.10f\n"+
+		"RootDelay = %.10f -> %.10f\nRootDispersion = %.10f -> %.10f\nPPrev =  %.10f -> %.10f\n",
 		clock.GlobalSystemClock.Offset, newSystemClock.Offset,
+		clock.GlobalSystemClock.Cumsum, newSystemClock.Cumsum,
 		clock.GlobalSystemClock.Jitter, newSystemClock.Jitter,
 		clock.GlobalSystemClock.RootDelay, newSystemClock.RootDelay,
 		clock.GlobalSystemClock.RootDispersion, newSystemClock.RootDispersion,
 		clock.GlobalSystemClock.PPrev, newSystemClock.PPrev)
+	// 替换全局变量
 	clock.GlobalSystemClock = newSystemClock
 	// 以批次号作为文件名，写入文件
 	path := fmt.Sprintf("C:\\Corner\\TMP\\BisheData\\clock\\%d.txt", congrat1.CurrentBatchID)
@@ -77,9 +87,9 @@ func writeToFile(path string, survivors []*clock.Peer, selectionJitter float64) 
 		return err
 	}
 	// 接下来几行分别是系统变量中的 Offset, Jitter, RootDelay, RootDispersion, PPrev
-	_, err = writer.WriteString(fmt.Sprintf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
-		clock.GlobalSystemClock.Offset, clock.GlobalSystemClock.Jitter, clock.GlobalSystemClock.RootDelay,
-		clock.GlobalSystemClock.RootDispersion, clock.GlobalSystemClock.PPrev))
+	_, err = writer.WriteString(fmt.Sprintf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
+		clock.GlobalSystemClock.Offset, clock.GlobalSystemClock.Cumsum, clock.GlobalSystemClock.Jitter,
+		clock.GlobalSystemClock.RootDelay, clock.GlobalSystemClock.RootDispersion, clock.GlobalSystemClock.PPrev))
 	if err != nil {
 		return err
 	}

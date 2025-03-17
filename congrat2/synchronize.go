@@ -84,9 +84,9 @@ func readLastSurvivors(path string, serverList []*KeKeyTimestamp) (error, map[st
 	scanner := bufio.NewScanner(file)
 	// 现在貌似用不到选择抖动，所以就不读取了
 	_ = scanner.Scan()
-	// 读取 5 个系统变量
-	floats := make([]float64, 5)
-	for i := 0; i < 5; i++ {
+	// 读取 6 个系统变量
+	floats := make([]float64, 6)
+	for i := 0; i < 6; i++ {
 		_ = scanner.Scan()
 		floats[i], err = strconv.ParseFloat(scanner.Text(), 64)
 		if err != nil {
@@ -95,10 +95,11 @@ func readLastSurvivors(path string, serverList []*KeKeyTimestamp) (error, map[st
 	}
 	clock.GlobalSystemClock = &clock.SystemClock{
 		Offset:         floats[0],
-		Jitter:         floats[1],
-		RootDelay:      floats[2],
-		RootDispersion: floats[3],
-		PPrev:          floats[4],
+		Cumsum:         floats[1],
+		Jitter:         floats[2],
+		RootDelay:      floats[3],
+		RootDispersion: floats[4],
+		PPrev:          floats[5],
 	}
 	// 读取 survivors 数量
 	_ = scanner.Scan()

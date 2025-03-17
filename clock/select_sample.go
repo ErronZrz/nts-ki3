@@ -123,7 +123,7 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 		k = 0.0
 	}
 	for _, s := range samples {
-		if s.offset+k*s.rootDistance >= low && s.offset-k*s.rootDistance <= high {
+		if s.offset+k*s.rootDistance > low && s.offset-k*s.rootDistance < high {
 			res = append(res, s)
 		}
 	}

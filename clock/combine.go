@@ -7,7 +7,7 @@ import (
 )
 
 type SystemClock struct {
-	Offset, Jitter, RootDelay, RootDispersion, PPrev float64
+	Offset, Cumsum, Jitter, RootDelay, RootDispersion, PPrev float64
 }
 
 var GlobalSystemClock = new(SystemClock)
@@ -37,7 +37,7 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64, useKalman bool) *S
 		peerJitter += w * math.Pow(p.Offset-sysPeer.Offset, 2)
 	}
 	offset /= totalWeight
-	pNow := 1.0
+	pNow := InitialP
 	if useKalman {
 		rttError /= totalWeight
 		offset, pNow = KalmanFilter(GlobalSystemClock.Offset, offset, GlobalSystemClock.PPrev, rttError)
@@ -48,10 +48,16 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64, useKalman bool) *S
 	// 理论上这里还需要加一个 PHI * (t4 - t4')，但是太麻烦了先不加
 	// 这里的计算公式确实是 offset 的绝对值，但是模拟实验时 offset 是不变的，所以应该减去旧值计算
 	// rootDispersion += math.Abs(offset)
-	rootDispersion += math.Abs(offset - GlobalSystemClock.Offset)
+	// rootDispersion += math.Abs(offset - GlobalSystemClock.Offset)
+	// 然而我发现应该直接在 NewPeer 函数里面就减去上一轮的 offset，所以这里还是直接取绝对值即可
+	rootDispersion += math.Abs(offset)
+	if useKalman {
+		fmt.Printf(" %.6f\n", rootDispersion)
+	}
 
 	return &SystemClock{
 		Offset:         offset,
+		Cumsum:         GlobalSystemClock.Cumsum + offset,
 		Jitter:         jitter,
 		RootDelay:      rootDelay,
 		RootDispersion: rootDispersion,

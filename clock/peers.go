@@ -3,11 +3,13 @@ package clock
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"slices"
 )
 
 const (
-	PHI = 15e-6
+	PHI         = 15e-6
+	OffsetError = 0.05
 )
 
 type OriginSample struct {
@@ -30,7 +32,9 @@ type Peer struct {
 }
 
 func NewOriginSample(t1, t2, t3, t4, p float64) *OriginSample {
-	offset := (t2 + t3 - t1 - t4) / 2
+	offset := (t2+t3-t1-t4)/2 - GlobalSystemClock.Cumsum
+	// 人为制造高斯噪声误差
+	offset += OffsetError * rand.NormFloat64()
 	delay := t2 + t4 - t1 - t3
 	dispersion := p + PHI*(t4-t1)
 	return &OriginSample{
@@ -67,11 +71,13 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 	for _, s := range samples {
 		weight /= 2
 		epsilon += weight * (s.Dispersion + PHI*(ts-s.T4))
+		// 这里的抖动值有个问题，就是收集了多个样本的过程中 offset 本身会变化，所以这真的能反映吗？
 		psi += math.Pow(s.Offset-offset0, 2)
 	}
 	var jitter float64
 	if len(samples) > 1 {
-		jitter = math.Sqrt(psi) / float64(len(samples)-1)
+		// （接上一个注释）所以这里暂时除以 4 以抵消这个影响，后面再看看怎么改吧
+		jitter = math.Sqrt(psi) / float64(len(samples)-1) / 4
 	} else {
 		jitter = math.Abs(delay0+rootDelay) / 4
 	}
@@ -88,6 +94,6 @@ func NewPeer(samples []*OriginSample, ip string, rootDelay, rootDispersion, ts f
 		// 然而搜索 synchronization distance 的最后一个结果又加上了抖动，这就很难搞了
 		// 又考虑到目前的抖动计算不太规范，所以就先去掉
 		RootDistance: (delay0+rootDelay)/2 + epsilon + rootDispersion,
-		RttError:     rttError,
+		RttError:     rttError + 0.3,
 	}
 }
