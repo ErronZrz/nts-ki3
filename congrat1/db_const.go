@@ -8,6 +8,7 @@ import (
 const (
 	DriverName     = "mysql"
 	DataSourceName = "root:liuyilun134@tcp(127.0.0.1:3306)/nts?charset=utf8&parseTime=True&loc=Local"
+	BaseDir        = "C:\\Corner\\TMP\\BisheData"
 )
 
 func UseDBConnection(f func(db *sql.DB) error) {

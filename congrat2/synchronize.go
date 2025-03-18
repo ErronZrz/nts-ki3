@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -25,7 +26,7 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 	}
 	fmt.Printf("server num = %d\n", len(serverList))
 	// 2. 从本地文件读取上一批次的 survivors
-	path := fmt.Sprintf("C:\\Corner\\TMP\\BisheData\\clock\\%d.txt", maxBatchID)
+	path := filepath.Join(congrat1.BaseDir, "clock", fmt.Sprintf("%d.txt", maxBatchID))
 	err, survivorIPMap, survivors := readLastSurvivors(path, serverList)
 	if err != nil {
 		return err

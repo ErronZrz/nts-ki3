@@ -13,7 +13,7 @@ var (
 	mySQLEnd   = time.Date(2037, 1, 19, 3, 14, 7, 0, time.UTC)
 )
 
-func insertServerInfo(db *sql.DB, ip string, info *datastruct.OffsetServerInfo) error {
+func InsertServerInfo(db *sql.DB, ip string, info *datastruct.OffsetServerInfo) error {
 	query := `INSERT INTO ke_servers (batch_id, ip_address, domain_name, cert_org, cert_issuer, 
         ntpv4_address, ntpv4_port, domain_matches_ip, cert_not_expired, cert_not_self_signed, 
         cert_not_before, cert_not_after, created_at, updated_at)
@@ -29,7 +29,7 @@ func insertServerInfo(db *sql.DB, ip string, info *datastruct.OffsetServerInfo) 
 	return nil
 }
 
-func insertKeyTimestamps(db *sql.DB, ip string, info *datastruct.OffsetServerInfo) error {
+func InsertKeyTimestamps(db *sql.DB, ip string, info *datastruct.OffsetServerInfo) error {
 	query := `INSERT INTO ke_key_timestamp (batch_id, ip_address, availability, score, aead_id, c2s_key, s2c_key, 
         cookies, packet_len, ttl, stratum, poll, ntp_precision, root_delay, root_dispersion, reference,
         t1, t1r, t2, t3, t4, created_at, updated_at)

@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -29,7 +30,7 @@ func NewSample(peer *Peer) *Sample {
 
 func SelectPeers(peers []*Peer, minCandidates int, strict bool) []*Peer {
 	n := len(peers)
-	path := fmt.Sprintf("C:\\Corner\\TMP\\BisheData\\samples\\%d.txt", congrat1.CurrentBatchID)
+	path := filepath.Join(congrat1.BaseDir, "samples", fmt.Sprintf("%d.txt", congrat1.CurrentBatchID))
 	err := writePeers(path, peers)
 	if err != nil {
 		fmt.Printf("error writing to file: %v", err)

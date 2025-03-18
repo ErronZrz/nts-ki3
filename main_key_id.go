@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func main() {
+func main2() {
 	// 定义命令行参数
 	var date string
 	var maxCoroutines int

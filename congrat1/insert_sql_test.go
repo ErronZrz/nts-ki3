@@ -98,11 +98,11 @@ func TestInsert(t *testing.T) {
 	}
 
 	UseDBConnection(func(db *sql.DB) error {
-		err := insertServerInfo(db, "127.0.0.1", info)
+		err := InsertServerInfo(db, "127.0.0.1", info)
 		if err != nil {
 			return err
 		}
-		err = insertKeyTimestamps(db, "127.0.0.1", info)
+		err = InsertKeyTimestamps(db, "127.0.0.1", info)
 		if err != nil {
 			return err
 		}

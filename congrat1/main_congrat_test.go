@@ -9,7 +9,7 @@ import (
 
 func TestMainFunction(t *testing.T) {
 	path := "C:\\Corner\\TMP\\BisheData\\0313-everNTS-585.txt"
-	maxGoroutines := 20
+	maxGoroutines := 10
 	err := MainFunction(path, maxGoroutines)
 	if err != nil {
 		t.Error(err)
@@ -23,11 +23,11 @@ func TestMainFunction(t *testing.T) {
 		fmt.Println("maxID:", maxID)
 		fmt.Println("currentBatchID:", CurrentBatchID)
 		for ip, info := range datastruct.OffsetInfoMap {
-			err = insertServerInfo(db, ip, info)
+			err = InsertServerInfo(db, ip, info)
 			if err != nil {
 				return err
 			}
-			err = insertKeyTimestamps(db, ip, info)
+			err = InsertKeyTimestamps(db, ip, info)
 			if err != nil {
 				return err
 			}

@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 const (
@@ -67,7 +68,7 @@ func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int, useKalman 
 	// 替换全局变量
 	clock.GlobalSystemClock = newSystemClock
 	// 以批次号作为文件名，写入文件
-	path := fmt.Sprintf("C:\\Corner\\TMP\\BisheData\\clock\\%d.txt", congrat1.CurrentBatchID)
+	path := filepath.Join(congrat1.BaseDir, "clock", fmt.Sprintf("%d.txt", congrat1.CurrentBatchID))
 	err := writeToFile(path, survivors, selectionJitter)
 	if err != nil {
 		fmt.Printf("error writing to file: %v", err)
