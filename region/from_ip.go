@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	xdbBuf, err := xdb.LoadContentFromFile("C:/Corner/TMP/毕设/NTP/Ntage3/nts-detect-txt/resources/ip2region.xdb")
+	xdbBuf, err := xdb.LoadContentFromFile("./resources/ip2region.xdb")
 	if err != nil {
 		fmt.Printf("load xdb file error: %v\n", err)
 	}

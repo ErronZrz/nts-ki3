@@ -9,7 +9,7 @@ import (
 
 const (
 	PHI         = 15e-6
-	OffsetError = 0.05
+	OffsetError = 0.0
 )
 
 type OriginSample struct {
