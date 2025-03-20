@@ -47,3 +47,7 @@ func TestGetTimestamp(t *testing.T) {
 	fmt.Println(timestamp)
 	fmt.Println(ParseTimestamp(timestamp))
 }
+
+func TestRootDelayToValue(t *testing.T) {
+	fmt.Println(RootDelayToValue([]byte{0, 0, 6, 0}))
+}
