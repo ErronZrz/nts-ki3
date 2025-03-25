@@ -58,7 +58,7 @@ func (p *NTSPayload) Print() {
 
 func (p *NTSPayload) Lines() string {
 	buf := new(bytes.Buffer)
-	buf.WriteString(fmt.Sprintf("Remote address:     %s: %d (%s)\n", p.Host, p.Port, region.GetChineseRegion(p.Host, 3)))
+	buf.WriteString(fmt.Sprintf("remote address:     %s:%d (%s)\n", p.Host, p.Port, region.GetChineseRegion(p.Host, 3)))
 	if p.Secure {
 		buf.WriteString(fmt.Sprintf("Certificate domain: %s (valid)\n", p.CertDomain))
 	} else {
@@ -101,7 +101,7 @@ func (p *NTSPayload) Lines() string {
 
 func (p *NTSDetectPayload) Lines() string {
 	buf := new(bytes.Buffer)
-	buf.WriteString(fmt.Sprintf("Remote address:     %s: %d (%s)\n", p.Host, p.Port, region.GetChineseRegion(p.Host, 3)))
+	buf.WriteString(fmt.Sprintf("remote address:     %s:%d (%s)\n", p.Host, p.Port, region.GetChineseRegion(p.Host, 3)))
 	if p.Secure {
 		buf.WriteString(fmt.Sprintf("Certificate domain: %s (valid)\n", p.CertDomain))
 	} else {

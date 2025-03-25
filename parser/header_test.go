@@ -7,9 +7,10 @@ import (
 )
 
 func TestParseHeader(t *testing.T) {
-	dataCh := udpdetect.DialNetworkNTP("43.159.49.98/24")
+	dataCh := udpdetect.DialNetworkNTP("192.168.91.128/25")
 	if dataCh == nil {
 		fmt.Println("dataCh is nil")
+		return
 	}
 	for p, ok := <-dataCh; ok; p, ok = <-dataCh {
 		err := p.Err

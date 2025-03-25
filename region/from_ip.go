@@ -21,7 +21,10 @@ var (
 func init() {
 	xdbBuf, err := xdb.LoadContentFromFile("./resources/ip2region.xdb")
 	if err != nil {
-		fmt.Printf("load xdb file error: %v\n", err)
+		xdbBuf, err = xdb.LoadContentFromFile("../resources/ip2region.xdb")
+		if err != nil {
+			fmt.Printf("load xdb file error: %v\n", err)
+		}
 	}
 	searcher, err = xdb.NewWithBuffer(xdbBuf)
 }

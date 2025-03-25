@@ -20,7 +20,6 @@ var (
 	normalDist    string
 	refID         = []byte{0, 0, 0, 0}
 	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
-	globalStart   = time.Now()
 )
 
 func main() {
@@ -77,19 +76,30 @@ func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
 		time.Sleep(delay)
 	}
 
-	now := globalNowTime().Add(time.Duration(timeOffset) * time.Millisecond)
+	now := time.Now().Add(time.Duration(timeOffset) * time.Millisecond)
 	response := make([]byte, 48)
+	// LI/VN/Mode (0 4 4)
 	response[0] = 0x24
-	response[1] = 0x02
+	// Stratum
+	response[1] = 0x03
+	// Poll
 	response[2] = 0x04
+	// Precision (-24)
 	response[3] = 0xE8
+	// Root Delay (0.15625)
 	copy(response[4:8], []byte{0x00, 0x00, 0x04, 0x00})
+	// Root Dispersion (0.234375)
 	copy(response[8:12], []byte{0x00, 0x00, 0x06, 0x00})
+	// Reference ID
 	copy(response[12:16], refID)
+	// Reference Timestamp
 	copy(response[16:24], getTimestamp(now.Add(-600*time.Second)))
+	// Origin Timestamp
 	copy(response[24:32], request[40:48])
+	// Receive Timestamp
 	copy(response[32:40], getTimestamp(now))
-	copy(response[40:48], getTimestamp(globalNowTime().Add(time.Duration(timeOffset)*time.Millisecond)))
+	// Transmit Timestamp
+	copy(response[40:48], getTimestamp(time.Now().Add(time.Duration(timeOffset)*time.Millisecond)))
 
 	if delay < 0 {
 		time.Sleep(-delay)
@@ -121,8 +131,4 @@ func calculateDelay() time.Duration {
 	totalDelay := float64(delta) + normalDelay
 
 	return time.Duration(totalDelay * float64(time.Millisecond))
-}
-
-func globalNowTime() time.Time {
-	return globalStart.Add(time.Since(globalStart))
 }
