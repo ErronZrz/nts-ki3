@@ -22,7 +22,7 @@ var (
 	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
-func main() {
+func main666() {
 	var rootCmd = &cobra.Command{
 		Use:   "malign",
 		Short: "Minimal NTP Server with configurable behavior",
