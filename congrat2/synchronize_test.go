@@ -8,6 +8,6 @@ import (
 
 func TestSynchronizeOnce(t *testing.T) {
 	congrat1.UseDBConnection(func(db *sql.DB) error {
-		return SynchronizeOnce(db, 30, 5, 5)
+		return SynchronizeOnce(db, 20, 5, 5)
 	})
 }

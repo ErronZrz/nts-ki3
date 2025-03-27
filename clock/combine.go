@@ -7,7 +7,8 @@ import (
 )
 
 type SystemClock struct {
-	Offset, Cumsum, Jitter, RootDelay, RootDispersion, PPrev float64
+	Offset, Cumsum, Jitter, RootDelay, RootDispersion, Skew float64
+	PPrev                                                   [2][2]float64
 }
 
 var GlobalSystemClock = new(SystemClock)
@@ -38,9 +39,14 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64, useKalman bool) *S
 	}
 	offset /= totalWeight
 	pNow := InitialP
+	skew := InitialSkew
 	if useKalman {
 		rttError /= totalWeight
-		offset, pNow = KalmanFilter(GlobalSystemClock.Offset, offset, GlobalSystemClock.PPrev, rttError)
+		prev := KalmanState{GlobalSystemClock.Offset, 0.001, GlobalSystemClock.PPrev}
+		next := KalmanFilterSkew(prev, offset, rttError, 600)
+		offset = next.Offset
+		skew = next.Skew
+		pNow = next.P
 	}
 	jitter := math.Sqrt(math.Pow(selectionJitter, 2) + peerJitter/totalWeight)
 	rootDispersion := sysPeer.RootDispersion + sysPeer.Dispersion
@@ -61,6 +67,7 @@ func CombineAlgorithm(peers []*Peer, selectionJitter float64, useKalman bool) *S
 		Jitter:         jitter,
 		RootDelay:      rootDelay,
 		RootDispersion: rootDispersion,
+		Skew:           skew,
 		PPrev:          pNow,
 	}
 }

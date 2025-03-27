@@ -33,6 +33,10 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 	}
 	fmt.Printf("last survivor num = %d\n", len(survivors))
 	// 3. 以分数作为概率筛选 m 台服务器，并且将队列中的服务器加入到排除列表
+	selectable := len(serverList) - len(survivors)
+	if selectable < m {
+		m = selectable
+	}
 	selected := selectRecordsByScoreProbability(serverList, m, survivorIPMap)
 	fmt.Printf("selected num = %d\n", len(selected))
 	// 4. 合并两个列表，记录所选服务器之前的 4 个时间戳，后面会使用
@@ -85,9 +89,9 @@ func readLastSurvivors(path string, serverList []*KeKeyTimestamp) (error, map[st
 	scanner := bufio.NewScanner(file)
 	// 现在貌似用不到选择抖动，所以就不读取了
 	_ = scanner.Scan()
-	// 读取 6 个系统变量
-	floats := make([]float64, 6)
-	for i := 0; i < 6; i++ {
+	// 读取 10 个系统变量
+	floats := make([]float64, 10)
+	for i := 0; i < 10; i++ {
 		_ = scanner.Scan()
 		floats[i], err = strconv.ParseFloat(scanner.Text(), 64)
 		if err != nil {
@@ -100,7 +104,11 @@ func readLastSurvivors(path string, serverList []*KeKeyTimestamp) (error, map[st
 		Jitter:         floats[2],
 		RootDelay:      floats[3],
 		RootDispersion: floats[4],
-		PPrev:          floats[5],
+		Skew:           floats[5],
+		PPrev: [2][2]float64{
+			{floats[6], floats[7]},
+			{floats[8], floats[9]},
+		},
 	}
 	// 读取 survivors 数量
 	_ = scanner.Scan()

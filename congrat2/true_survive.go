@@ -53,18 +53,22 @@ func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int, useKalman 
 	// 组合时钟
 	newSystemClock := clock.CombineAlgorithm(survivors, selectionJitter, useKalman)
 	// 如果满足两个条件：淘汰率超过阈值、卡尔曼增益低于阈值，则触发恐慌模式
-	if eliminationRate > MinPanicEliminationRate && clock.KalmanGain < MaxPanicKalmanGain {
-		fmt.Printf("PANIC MODE, elimination rate = %.1f%%, Kk = %.10f\n", eliminationRate*100, clock.KalmanGain)
+	if eliminationRate > MinPanicEliminationRate && clock.KalmanGain[0] < MaxPanicKalmanGain {
+		fmt.Printf("PANIC MODE, elimination rate = %.1f%%, Kk = %.10f\n", eliminationRate*100, clock.KalmanGain[0])
 	}
 	// 打印全局变量
+	p0 := clock.GlobalSystemClock.PPrev
+	p1 := newSystemClock.PPrev
 	fmt.Printf("Offset = %.10f -> %.10f\nCumsum = %.10f -> %.10f\nJitter = %.10f -> %.10f\n"+
-		"RootDelay = %.10f -> %.10f\nRootDispersion = %.10f -> %.10f\nPPrev =  %.10f -> %.10f\n",
+		"RootDelay = %.10f -> %.10f\nRootDispersion = %.10f -> %.10f\nSkew =  %.10f -> %.10f\n"+
+		"PPrev = %.10f %.10f -> %.10f %.10f\n        %.10f %.10f    %.10f %.10f\n",
 		clock.GlobalSystemClock.Offset, newSystemClock.Offset,
 		clock.GlobalSystemClock.Cumsum, newSystemClock.Cumsum,
 		clock.GlobalSystemClock.Jitter, newSystemClock.Jitter,
 		clock.GlobalSystemClock.RootDelay, newSystemClock.RootDelay,
 		clock.GlobalSystemClock.RootDispersion, newSystemClock.RootDispersion,
-		clock.GlobalSystemClock.PPrev, newSystemClock.PPrev)
+		clock.GlobalSystemClock.Skew, newSystemClock.Skew,
+		p0[0][0], p0[0][1], p1[0][0], p1[0][1], p0[1][0], p0[1][1], p1[1][0], p1[1][1])
 	// 替换全局变量
 	clock.GlobalSystemClock = newSystemClock
 	// 以批次号作为文件名，写入文件
@@ -87,10 +91,13 @@ func writeToFile(path string, survivors []*clock.Peer, selectionJitter float64) 
 	if err != nil {
 		return err
 	}
-	// 接下来几行分别是系统变量中的 Offset, Jitter, RootDelay, RootDispersion, PPrev
-	_, err = writer.WriteString(fmt.Sprintf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
-		clock.GlobalSystemClock.Offset, clock.GlobalSystemClock.Cumsum, clock.GlobalSystemClock.Jitter,
-		clock.GlobalSystemClock.RootDelay, clock.GlobalSystemClock.RootDispersion, clock.GlobalSystemClock.PPrev))
+	// 接下来几行分别是系统变量中的 Offset, Jitter, RootDelay, RootDispersion, Skew, PPrev（矩阵占四行）
+	gc := clock.GlobalSystemClock
+	p := gc.PPrev
+	_, err = writer.WriteString(fmt.Sprintf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
+		gc.Offset, gc.Cumsum, gc.Jitter,
+		gc.RootDelay, gc.RootDispersion, gc.Skew,
+		p[0][0], p[0][1], p[1][0], p[1][1]))
 	if err != nil {
 		return err
 	}
