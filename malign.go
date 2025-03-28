@@ -13,11 +13,10 @@ import (
 )
 
 var (
-	port          int
-	delta         int
-	timeOffset    int
+	ports         string
+	delta         string
+	timeOffset    string
 	availability  int
-	normalDist    string
 	refID         = []byte{0, 0, 0, 0}
 	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
 )
@@ -29,11 +28,10 @@ func main666() {
 		Run:   startServer,
 	}
 
-	rootCmd.Flags().IntVarP(&port, "port", "p", 123, "Port number to listen on")
-	rootCmd.Flags().IntVarP(&delta, "delta", "d", 0, "Artificial delay in milliseconds")
-	rootCmd.Flags().IntVarP(&timeOffset, "timeOffset", "t", 0, "Time offset in milliseconds")
+	rootCmd.Flags().StringVarP(&ports, "ports", "p", "123", "Port number or range to listen on (e.g. 123 or 3001-3010)")
+	rootCmd.Flags().StringVarP(&delta, "delta", "d", "0,0", "Artificial delay in format avg,std (ms)")
+	rootCmd.Flags().StringVarP(&timeOffset, "timeOffset", "t", "0,0", "Time offset in format avg,std (ms)")
 	rootCmd.Flags().IntVarP(&availability, "availability", "a", 100, "Probability of responding (%)")
-	rootCmd.Flags().StringVarP(&normalDist, "normalDist", "n", "0,0", "Additional delay in format avg,std")
 
 	err := rootCmd.Execute()
 	if err != nil {
@@ -42,41 +40,54 @@ func main666() {
 }
 
 func startServer(_ *cobra.Command, _ []string) {
-	addr := net.UDPAddr{
-		Port: port,
-		IP:   net.ParseIP("0.0.0.0"),
-	}
-
-	conn, err := net.ListenUDP("udp", &addr)
+	portList, err := parsePorts(ports)
 	if err != nil {
-		panic(err)
+		_, _ = fmt.Fprintf(os.Stderr, "Invalid ports argument: %v\n", err)
+		os.Exit(1)
 	}
-	defer func() { _ = conn.Close() }()
 
-	buf := make([]byte, 48)
+	for _, port := range portList {
+		addr := net.UDPAddr{
+			Port: port,
+			IP:   net.ParseIP("0.0.0.0"),
+		}
 
-	for {
-		n, remoteAddr, err := conn.ReadFromUDP(buf)
-		if err != nil || n < 48 {
+		conn, err := net.ListenUDP("udp", &addr)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Failed to listen on port %d: %v\n", port, err)
 			continue
 		}
 
-		if rand.Intn(100) >= availability {
-			continue
-		}
+		go func(c *net.UDPConn) {
+			defer func() { _ = c.Close() }()
+			buf := make([]byte, 48)
 
-		go handleRequest(conn, remoteAddr, buf[:n])
+			for {
+				n, remoteAddr, err := c.ReadFromUDP(buf)
+				if err != nil || n < 48 {
+					continue
+				}
+
+				if rand.Intn(100) >= availability {
+					continue
+				}
+
+				go handleRequest(c, remoteAddr, buf[:n])
+			}
+		}(conn)
 	}
+	select {} // prevent main from exiting
 }
 
 func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
-	delay := calculateDelay()
+	delay := calculateRandomDuration(delta)
+	timeOffset := calculateRandomDuration(timeOffset)
 
 	if delay > 0 {
 		time.Sleep(delay)
 	}
 
-	now := time.Now().Add(time.Duration(timeOffset) * time.Millisecond)
+	now := time.Now().Add(timeOffset)
 	response := make([]byte, 48)
 	// LI/VN/Mode (0 4 4)
 	response[0] = 0x24
@@ -99,7 +110,7 @@ func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
 	// Receive Timestamp
 	copy(response[32:40], getTimestamp(now))
 	// Transmit Timestamp
-	copy(response[40:48], getTimestamp(time.Now().Add(time.Duration(timeOffset)*time.Millisecond)))
+	copy(response[40:48], getTimestamp(time.Now().Add(timeOffset)))
 
 	if delay < 0 {
 		time.Sleep(-delay)
@@ -122,13 +133,43 @@ func getTimestamp(t time.Time) []byte {
 	return res
 }
 
-func calculateDelay() time.Duration {
-	parts := strings.Split(normalDist, ",")
-	avg, _ := strconv.ParseFloat(parts[0], 64)
-	std, _ := strconv.ParseFloat(parts[1], 64)
+func calculateRandomDuration(arg string) time.Duration {
+	parts := strings.Split(arg, ",")
+	if len(parts) != 2 {
+		return 0
+	}
 
-	normalDelay := rand.NormFloat64()*std + avg
-	totalDelay := float64(delta) + normalDelay
+	avg, err1 := strconv.ParseFloat(parts[0], 64)
+	std, err2 := strconv.ParseFloat(parts[1], 64)
+	if err1 != nil || err2 != nil {
+		return 0
+	}
 
-	return time.Duration(totalDelay * float64(time.Millisecond))
+	value := rand.NormFloat64()*std + avg
+	return time.Duration(value * float64(time.Millisecond))
+}
+
+func parsePorts(portsStr string) ([]int, error) {
+	if strings.Contains(portsStr, "-") {
+		parts := strings.Split(portsStr, "-")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid port range")
+		}
+		start, err1 := strconv.Atoi(parts[0])
+		end, err2 := strconv.Atoi(parts[1])
+		if err1 != nil || err2 != nil || start > end || start <= 0 || end > 65535 {
+			return nil, fmt.Errorf("invalid port range")
+		}
+		var result []int
+		for i := start; i <= end; i++ {
+			result = append(result, i)
+		}
+		return result, nil
+	} else {
+		port, err := strconv.Atoi(portsStr)
+		if err != nil || port <= 0 || port > 65535 {
+			return nil, fmt.Errorf("invalid port")
+		}
+		return []int{port}, nil
+	}
 }

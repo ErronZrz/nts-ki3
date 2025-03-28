@@ -126,6 +126,8 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 	for _, s := range samples {
 		if s.offset+k*s.rootDistance > low && s.offset-k*s.rootDistance < high {
 			res = append(res, s)
+		} else {
+			fmt.Printf("Falseticker: %s\n", s.ip)
 		}
 	}
 	if len(res) < minCandidates {

@@ -49,7 +49,7 @@ func Initialize(db *sql.DB, m0, minCandidates, minSurvivors int) error {
 	}
 	congrat1.CurrentBatchID = maxBatchID + 1
 	// 1. 从数据库读取可用服务器
-	serverList, err := getLatestRecordsByAEADID(db, 15)
+	serverList, err := getLatestRecordsByAEADID(db, congrat1.UsedAEADID)
 	if err != nil {
 		return err
 	}
@@ -67,14 +67,14 @@ func Initialize(db *sql.DB, m0, minCandidates, minSurvivors int) error {
 		if err != nil {
 			return err
 		}
-		err = executeNTP(server, 15)
+		err = executeNTP(server, congrat1.UsedAEADID)
 		if err != nil {
 			fmt.Println(err)
 			// 如果失败则标记失败
 			server.NTPv4Address = FailFlag
 			continue
 		}
-		err = insertKeyTimestamps2(db, server, 15)
+		err = insertKeyTimestamps2(db, server, congrat1.UsedAEADID)
 		if err != nil {
 			return err
 		}
@@ -108,10 +108,10 @@ func getLatestRecordsByAEADID(db *sql.DB, aeadID int) ([]*KeKeyTimestamp, error)
 	for rows.Next() {
 		var record KeKeyTimestamp
 		err := rows.Scan(
-			&record.ID, &record.BatchID, &record.IPAddress, &record.ASN, &record.Availability, &record.Score, &record.AEADID,
-			&record.C2SKey, &record.S2CKey, &record.Cookies, &record.PacketLen, &record.TTL, &record.Stratum, &record.Poll,
-			&record.NTPPrecision, &record.RootDelay, &record.RootDispersion, &record.Reference,
-			&record.T1, &record.T1R, &record.T2, &record.T3, &record.T4,
+			&record.ID, &record.BatchID, &record.IPAddress, &record.ASN, &record.Availability, &record.Score,
+			&record.AEADID, &record.C2SKey, &record.S2CKey, &record.Cookies, &record.PacketLen, &record.TTL,
+			&record.Stratum, &record.Poll, &record.NTPPrecision, &record.RootDelay, &record.RootDispersion,
+			&record.Reference, &record.T1, &record.T1R, &record.T2, &record.T3, &record.T4,
 			&record.CreatedAt, &record.UpdatedAt,
 		)
 		if err != nil {

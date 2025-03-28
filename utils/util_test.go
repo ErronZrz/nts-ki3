@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -42,10 +44,31 @@ func TestParseNTPTimestamp(t *testing.T) {
 }
 
 func TestGetTimestamp(t *testing.T) {
-	tm := time.Now().AddDate(10, 0, 0)
-	timestamp := GetTimestamp(tm)
-	fmt.Println(timestamp)
-	fmt.Println(ParseTimestamp(timestamp))
+	now := time.Now()
+	t1 := now.Add(1 * time.Millisecond)
+	t2 := t1.Add(50 * time.Microsecond)
+	t3 := t2.Add(1 * time.Millisecond)
+	t0 := GetTimestamp(now)
+	str, err := bytesToHexList([][]byte{t0, t0, GetTimestamp(t1), GetTimestamp(t2), GetTimestamp(t3)})
+	if err != nil {
+		t.Errorf("Error converting bytes to hex: %v", err)
+	} else {
+		fmt.Println(str)
+	}
+}
+
+func bytesToHexList(data [][]byte) (string, error) {
+	var hexStrings []string
+
+	for i, b := range data {
+		if len(b) != 8 {
+			return "", fmt.Errorf("element at index %d is not 8 bytes long (length=%d)", i, len(b))
+		}
+		hexStr := "0x" + strings.ToUpper(hex.EncodeToString(b))
+		hexStrings = append(hexStrings, hexStr)
+	}
+
+	return strings.Join(hexStrings, ", "), nil
 }
 
 func TestRootDelayToValue(t *testing.T) {

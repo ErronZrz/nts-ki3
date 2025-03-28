@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -83,6 +85,16 @@ func executeNTP(ke *KeKeyTimestamp, aeadID int) error {
 }
 
 func queryPort(db *sql.DB, ke *KeKeyTimestamp) error {
+	if strings.Contains(ke.IPAddress, ":") {
+		parts := strings.Split(ke.IPAddress, ":")
+		ke.NTPv4Address = parts[0]
+		port, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return err
+		}
+		ke.NTPv4Port = port
+		return nil
+	}
 	query := `SELECT ntpv4_address, ntpv4_port FROM ke_servers WHERE ip_address = ? ORDER BY id DESC LIMIT 1;`
 	rows, err := db.Query(query, ke.IPAddress)
 	if err != nil {

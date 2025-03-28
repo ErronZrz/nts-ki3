@@ -20,7 +20,7 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 	}
 	congrat1.CurrentBatchID = maxBatchID + 1
 	// 1. 从数据库读取可用服务器
-	serverList, err := getLatestRecordsByAEADID(db, 15)
+	serverList, err := getLatestRecordsByAEADID(db, congrat1.UsedAEADID)
 	if err != nil {
 		return err
 	}
@@ -59,14 +59,14 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 		if err != nil {
 			return err
 		}
-		err = executeNTP(server, 15)
+		err = executeNTP(server, congrat1.UsedAEADID)
 		if err != nil {
 			fmt.Println(err)
 			// 如果失败则标记失败
 			server.NTPv4Address = FailFlag
 			continue
 		}
-		err = insertKeyTimestamps2(db, server, 15)
+		err = insertKeyTimestamps2(db, server, congrat1.UsedAEADID)
 		if err != nil {
 			return err
 		}
