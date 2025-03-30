@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
+func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int, useKalman bool) error {
 	// 0. 更新批次
 	maxBatchID, err := congrat1.MaxBatchID(db)
 	if err != nil {
@@ -74,7 +74,7 @@ func SynchronizeOnce(db *sql.DB, m, minCandidates, minSurvivors int) error {
 	// 6. 生成对等体信息
 	peers := getPeers(selected, prevSamples)
 	// 7. 选出 truechimers、聚类、合并（使用 Kalman 滤波）
-	whatsoever(peers, minCandidates, minSurvivors, true)
+	whatsoever(peers, minCandidates, minSurvivors, useKalman)
 	// 8. 更新可用性与分数
 	return congrat1.UpdateAvailabilityAndScore(db)
 }

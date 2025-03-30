@@ -73,7 +73,7 @@ func TestAddRegion(t *testing.T) {
 	defer func() {
 		_ = file.Close()
 	}()
-	outFile, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	outFile, err := os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		t.Error(err)
 		return
