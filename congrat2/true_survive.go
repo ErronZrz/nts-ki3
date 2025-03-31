@@ -80,7 +80,8 @@ func whatsoever(peers []*clock.Peer, minCandidates, minSurvivors int, useKalman 
 }
 
 func writeToFile(path string, survivors []*clock.Peer, selectionJitter float64) error {
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// 不需要 os.O_APPEND 追加模式，若存在直接覆盖即可
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}

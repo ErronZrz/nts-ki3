@@ -85,7 +85,8 @@ func SelectSamples(samples []*Sample, minCandidates int, strict bool) []*Sample 
 		low, high       float64
 		meet            bool
 	)
-	for nFake := 0; nFake < n/2; nFake++ {
+	// 原 NTP 是 nFake>=n/2 即终止循环并标记失败，但这样容易导致同步失败，因此改成 n
+	for nFake := 0; nFake < n; nFake++ {
 		count, crossMid = 0, 0
 		for _, s := range extended {
 			low = s.realValue()
