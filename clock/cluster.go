@@ -1,7 +1,6 @@
 package clock
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -32,7 +31,7 @@ func ClusterAlgorithm(peers []*Peer, minSurvivors int) (survivors []*Peer, selec
 				maxSelectionJitterIP = peer.IP
 			}
 		}
-		fmt.Printf("remnant: %d, selectionJitter = %.10f, minJitter = %.10f\n", len(ip2peer), selectionJitter, minJitter)
+		// fmt.Printf("remnant: %d, selectionJitter = %.10f, minJitter = %.10f\n", len(ip2peer), selectionJitter, minJitter)
 		// 存活数量已达到下限，或者选择抖动最大值小于最小抖动，则完成聚类，否则踢出
 		if len(ip2peer) <= minSurvivors || selectionJitter <= minJitter {
 			break
