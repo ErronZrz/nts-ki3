@@ -2,6 +2,7 @@ package clock
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"strconv"
@@ -38,7 +39,7 @@ func once(now int) {
 	}
 	offsets := make([]float64, len(data))
 	weights := make([]float64, len(data))
-	var sum, weightValue, weightSum, finalVal, finalWeightSum float64
+	var sum, weightValue, weightSum, finalVal, finalSum, finalWeightSum float64
 	for i, p := range data {
 		offsets[i] = p.Offset
 		weights[i] = 1 / p.RootDistance
@@ -53,18 +54,29 @@ func once(now int) {
 	for i, p := range result {
 		idx := m[p.IP]
 		resultIndexes[i] = idx
+		finalSum += p.Offset
 		finalVal += p.Offset * weights[idx]
 		finalWeightSum += weights[idx]
 	}
+	finalSum /= float64(len(result))
 	kMeansRes := KMeans(offsets, 3)
 	sort.Float64s(kMeansRes)
 	printFloats(offsets, "offsets", now)
 	// printFloats(weights, "weights", now)
 	printInts(resultIndexes, "selected", now)
+	avg := sum / float64(len(offsets))
+	weightedAvg := weightValue / weightSum
+	center := finalVal / finalWeightSum
 	fmt.Printf("avg[%d] = %.10f\nweighted_avg[%d] = %.10f\nmedian[%d] = %.10f\n"+
 		"kmeans[%d] = %.10f\ncenter[%d] = %.10f\n",
-		now, sum/float64(len(offsets)), now, weightValue/weightSum, now, median,
-		now, kMeansRes[1], now, finalVal/finalWeightSum)
+		now, avg, now, weightedAvg, now, median, now, kMeansRes[1], now, center)
+	avgDiff := math.Abs(avg - finalSum)
+	weightedAvgDiff := math.Abs(weightedAvg - finalSum)
+	medianDiff := math.Abs(median - finalSum)
+	kMeansDiff := math.Abs(kMeansRes[1] - finalSum)
+	centerDiff := math.Abs(center - finalSum)
+	fmt.Printf("diff_data[%d] = np.array([%.10f, %.10f, %.10f, %.10f, %.10f])\n",
+		now, avgDiff, weightedAvgDiff, medianDiff, kMeansDiff, centerDiff)
 }
 
 func shuffle(avgOffset float64, rd *rand.Rand) {
