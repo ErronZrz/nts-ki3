@@ -17,7 +17,7 @@ var (
 	delta         string
 	timeOffset    string
 	availability  int
-	ip            string // 新增
+	ip            string
 	refID         = []byte{0, 0, 0, 0}
 	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
 )
