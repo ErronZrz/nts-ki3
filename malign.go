@@ -17,6 +17,7 @@ var (
 	delta         string
 	timeOffset    string
 	availability  int
+	ip            string // 新增
 	refID         = []byte{0, 0, 0, 0}
 	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
 )
@@ -28,6 +29,7 @@ func main666() {
 		Run:   startServer,
 	}
 
+	rootCmd.Flags().StringVarP(&ip, "ip", "i", "0.0.0.0", "IP address to bind to")
 	rootCmd.Flags().StringVarP(&ports, "ports", "p", "123", "Port number or range to listen on (e.g. 123 or 3001-3010)")
 	rootCmd.Flags().StringVarP(&delta, "delta", "d", "0,0", "Artificial delay in format avg,std (ms)")
 	rootCmd.Flags().StringVarP(&timeOffset, "timeOffset", "t", "0,0", "Time offset in format avg,std (ms)")
@@ -49,7 +51,7 @@ func startServer(_ *cobra.Command, _ []string) {
 	for _, port := range portList {
 		addr := net.UDPAddr{
 			Port: port,
-			IP:   net.ParseIP("0.0.0.0"),
+			IP:   net.ParseIP(ip),
 		}
 
 		conn, err := net.ListenUDP("udp", &addr)
