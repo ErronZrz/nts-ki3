@@ -13,13 +13,16 @@ import (
 )
 
 var (
-	ip            string
-	ports         string
-	delta         string
-	timeOffset    string
-	availability  int
-	refID         = []byte{0, 0, 0, 0}
-	startingPoint = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+	ip                     string
+	ports                  string
+	delta                  string
+	timeOffset             string
+	availability           int
+	availabilityDelta      int
+	availabilityChangeTime int
+	minAvailability        int
+	refID                  = []byte{0, 0, 0, 0}
+	startingPoint          = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 func main666() {
@@ -35,6 +38,10 @@ func main666() {
 	rootCmd.Flags().StringVarP(&timeOffset, "timeOffset", "t", "0,0", "Time offset in format avg,std (ms)")
 	rootCmd.Flags().IntVarP(&availability, "availability", "a", 100, "Probability of responding (%)")
 
+	rootCmd.Flags().IntVarP(&availabilityDelta, "availabilityDelta", "D", 0, "Percentage change in availability after the specified time")
+	rootCmd.Flags().IntVarP(&availabilityChangeTime, "availabilityChangeTime", "C", 10, "Time in minutes after which availability will change")
+	rootCmd.Flags().IntVarP(&minAvailability, "minAvailability", "M", 10, "Minimum availability percentage")
+
 	err := rootCmd.Execute()
 	if err != nil {
 		_, _ = fmt.Fprint(os.Stderr, err)
@@ -47,6 +54,9 @@ func startServer(_ *cobra.Command, _ []string) {
 		_, _ = fmt.Fprintf(os.Stderr, "Invalid ports argument: %v\n", err)
 		os.Exit(1)
 	}
+
+	// 启动定时任务调整可用性
+	go adjustAvailability()
 
 	for _, port := range portList {
 		addr := net.UDPAddr{
@@ -81,6 +91,7 @@ func startServer(_ *cobra.Command, _ []string) {
 	select {} // prevent main from exiting
 }
 
+// 处理 NTP 请求
 func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
 	delay := calculateRandomDuration(delta)
 	timeOffset := calculateRandomDuration(timeOffset)
@@ -124,6 +135,7 @@ func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
 	}
 }
 
+// 获取时间戳
 func getTimestamp(t time.Time) []byte {
 	d := t.Sub(startingPoint)
 	seconds := d / time.Second
@@ -135,6 +147,7 @@ func getTimestamp(t time.Time) []byte {
 	return res
 }
 
+// 计算随机延迟
 func calculateRandomDuration(arg string) time.Duration {
 	parts := strings.Split(arg, ",")
 	if len(parts) != 2 {
@@ -151,6 +164,7 @@ func calculateRandomDuration(arg string) time.Duration {
 	return time.Duration(value * float64(time.Millisecond))
 }
 
+// 解析端口
 func parsePorts(portsStr string) ([]int, error) {
 	if strings.Contains(portsStr, "-") {
 		parts := strings.Split(portsStr, "-")
@@ -173,5 +187,25 @@ func parsePorts(portsStr string) ([]int, error) {
 			return nil, fmt.Errorf("invalid port")
 		}
 		return []int{port}, nil
+	}
+}
+
+// 定时更新可用性
+func adjustAvailability() {
+	// 等待 availabilityChangeTime 分钟后开始调整可用性
+	time.Sleep(time.Duration(availabilityChangeTime) * time.Minute)
+
+	for {
+		// 修改可用性
+		availability = availability + availabilityDelta
+		if availability > 100 {
+			availability = 100
+		}
+		if availability < minAvailability {
+			availability = minAvailability
+		}
+
+		// 每分钟调整一次
+		time.Sleep(time.Minute)
 	}
 }
