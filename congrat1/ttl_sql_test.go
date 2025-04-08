@@ -7,7 +7,7 @@ import (
 
 func TestUpdateTTLWithFile(t *testing.T) {
 	UseDBConnection(func(db *sql.DB) error {
-		path := "C:\\Corner\\TMP\\NTPData\\0327-1.pcapng"
+		path := "C:\\Corner\\TMP\\NTPData\\0408-main.pcapng"
 		err := UpdateTTLWithFile(path, db)
 		if err != nil {
 			return err

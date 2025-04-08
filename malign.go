@@ -9,21 +9,36 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 var (
-	ip                     string
-	ports                  string
-	delta                  string
-	timeOffset             string
-	availability           int
-	availabilityDelta      int
-	availabilityChangeTime int
-	minAvailability        int
-	refID                  = []byte{0, 0, 0, 0}
-	startingPoint          = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+	ip              string
+	ports           string
+	deltaStr        string
+	deltaAvg        float64
+	deltaStdDev     float64
+	timeOffset      string
+	availability    int
+	availabilityStr string
+	deltaStrategy   string
+	refID           = []byte{0, 0, 0, 0}
+	startingPoint   = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+	mutex           sync.Mutex
 )
+
+type availabilityRule struct {
+	startMin int
+	delta    int
+	minAvail int
+}
+
+type deltaStep struct {
+	startMin int
+	interval int
+	incr     float64
+}
 
 func main666() {
 	var rootCmd = &cobra.Command{
@@ -33,14 +48,12 @@ func main666() {
 	}
 
 	rootCmd.Flags().StringVarP(&ip, "ip", "i", "0.0.0.0", "IP address to bind to")
-	rootCmd.Flags().StringVarP(&ports, "ports", "p", "123", "Port number or range to listen on (e.g. 123 or 3001-3010)")
-	rootCmd.Flags().StringVarP(&delta, "delta", "d", "0,0", "Artificial delay in format avg,std (ms)")
+	rootCmd.Flags().StringVarP(&ports, "ports", "p", "123", "Port number or range to listen on")
+	rootCmd.Flags().StringVarP(&deltaStr, "delta", "d", "0,0", "Artificial delay in format avg,std (ms)")
 	rootCmd.Flags().StringVarP(&timeOffset, "timeOffset", "t", "0,0", "Time offset in format avg,std (ms)")
-	rootCmd.Flags().IntVarP(&availability, "availability", "a", 100, "Probability of responding (%)")
-
-	rootCmd.Flags().IntVarP(&availabilityDelta, "availabilityDelta", "D", 0, "Percentage change in availability after the specified time")
-	rootCmd.Flags().IntVarP(&availabilityChangeTime, "availabilityChangeTime", "C", 10, "Time in minutes after which availability will change")
-	rootCmd.Flags().IntVarP(&minAvailability, "minAvailability", "M", 10, "Minimum availability percentage")
+	rootCmd.Flags().IntVarP(&availability, "availability", "a", 100, "Initial probability of responding (%)")
+	rootCmd.Flags().StringVarP(&availabilityStr, "availabilityStrategy", "A", "0,0,10", "Availability strategy in format startMin,delta,minAvail")
+	rootCmd.Flags().StringVarP(&deltaStrategy, "deltaStrategy", "D", "0,10,0", "Delta adjustment strategy string e.g. 20,30,-200/30,30,200")
 
 	err := rootCmd.Execute()
 	if err != nil {
@@ -55,8 +68,32 @@ func startServer(_ *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	// 启动定时任务调整可用性
-	go adjustAvailability()
+	parts := strings.Split(deltaStr, ",")
+	if len(parts) != 2 {
+		_, _ = fmt.Fprintln(os.Stderr, "Invalid delta argument format")
+		os.Exit(1)
+	}
+	avg, _ := strconv.ParseFloat(parts[0], 64)
+	std, _ := strconv.ParseFloat(parts[1], 64)
+	deltaAvg = avg
+	deltaStdDev = std
+
+	availRule := parseAvailabilityStrategy(availabilityStr)
+	deltaSteps := parseDeltaStrategies(deltaStrategy)
+
+	go adjustAvailability(availRule)
+	for _, strategy := range deltaSteps {
+		go func(s deltaStep) {
+			time.Sleep(time.Duration(s.startMin) * time.Minute)
+			interval := time.Duration(s.interval) * time.Minute
+			for {
+				mutex.Lock()
+				deltaAvg += s.incr
+				mutex.Unlock()
+				time.Sleep(interval)
+			}
+		}(strategy)
+	}
 
 	for _, port := range portList {
 		addr := net.UDPAddr{
@@ -91,16 +128,17 @@ func startServer(_ *cobra.Command, _ []string) {
 	select {} // prevent main from exiting
 }
 
-// 处理 NTP 请求
 func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
-	delay := calculateRandomDuration(delta)
-	timeOffset := calculateRandomDuration(timeOffset)
+	mutex.Lock()
+	delay := time.Duration((rand.NormFloat64()*deltaStdDev + deltaAvg) * float64(time.Millisecond))
+	mutex.Unlock()
+	offset := randomOffset(timeOffset)
 
 	if delay > 0 {
 		time.Sleep(delay)
 	}
 
-	now := time.Now().Add(timeOffset)
+	now := time.Now().Add(offset)
 	response := make([]byte, 48)
 	// LI/VN/Mode (0 4 4)
 	response[0] = 0x24
@@ -123,7 +161,7 @@ func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
 	// Receive Timestamp
 	copy(response[32:40], getTimestamp(now))
 	// Transmit Timestamp
-	copy(response[40:48], getTimestamp(time.Now().Add(timeOffset)))
+	copy(response[40:48], getTimestamp(time.Now().Add(offset)))
 
 	if delay < 0 {
 		time.Sleep(-delay)
@@ -135,7 +173,6 @@ func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, request []byte) {
 	}
 }
 
-// 获取时间戳
 func getTimestamp(t time.Time) []byte {
 	d := t.Sub(startingPoint)
 	seconds := d / time.Second
@@ -147,24 +184,19 @@ func getTimestamp(t time.Time) []byte {
 	return res
 }
 
-// 计算随机延迟
-func calculateRandomDuration(arg string) time.Duration {
+func randomOffset(arg string) time.Duration {
 	parts := strings.Split(arg, ",")
 	if len(parts) != 2 {
 		return 0
 	}
 
-	avg, err1 := strconv.ParseFloat(parts[0], 64)
-	std, err2 := strconv.ParseFloat(parts[1], 64)
-	if err1 != nil || err2 != nil {
-		return 0
-	}
+	avg, _ := strconv.ParseFloat(parts[0], 64)
+	std, _ := strconv.ParseFloat(parts[1], 64)
 
 	value := rand.NormFloat64()*std + avg
 	return time.Duration(value * float64(time.Millisecond))
 }
 
-// 解析端口
 func parsePorts(portsStr string) ([]int, error) {
 	if strings.Contains(portsStr, "-") {
 		parts := strings.Split(portsStr, "-")
@@ -190,22 +222,44 @@ func parsePorts(portsStr string) ([]int, error) {
 	}
 }
 
-// 定时更新可用性
-func adjustAvailability() {
-	// 等待 availabilityChangeTime 分钟后开始调整可用性
-	time.Sleep(time.Duration(availabilityChangeTime) * time.Minute)
+func parseAvailabilityStrategy(s string) availabilityRule {
+	parts := strings.Split(s, ",")
+	if len(parts) != 3 {
+		return availabilityRule{0, 0, 10}
+	}
+	start, _ := strconv.Atoi(parts[0])
+	delta, _ := strconv.Atoi(parts[1])
+	minAvail, _ := strconv.Atoi(parts[2])
+	return availabilityRule{startMin: start, delta: delta, minAvail: minAvail}
+}
+
+func adjustAvailability(rule availabilityRule) {
+	time.Sleep(time.Duration(rule.startMin) * time.Minute)
 
 	for {
-		// 修改可用性
-		availability = availability + availabilityDelta
+		availability += rule.delta
 		if availability > 100 {
 			availability = 100
 		}
-		if availability < minAvailability {
-			availability = minAvailability
+		if availability < rule.minAvail {
+			availability = rule.minAvail
 		}
-
-		// 每分钟调整一次
 		time.Sleep(time.Minute)
 	}
+}
+
+func parseDeltaStrategies(s string) []deltaStep {
+	var result []deltaStep
+	strategies := strings.Split(s, "/")
+	for _, item := range strategies {
+		parts := strings.Split(item, ",")
+		if len(parts) != 3 {
+			continue
+		}
+		start, _ := strconv.Atoi(parts[0])
+		interval, _ := strconv.Atoi(parts[1])
+		incr, _ := strconv.ParseFloat(parts[2], 64)
+		result = append(result, deltaStep{startMin: start, interval: interval, incr: incr})
+	}
+	return result
 }
