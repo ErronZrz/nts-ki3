@@ -104,17 +104,18 @@ func calculateScore(stratum, ttl int, availability float64, rootDelay, rootDispe
 	if stratum < 1 || stratum > 15 {
 		return 50
 	}
-	availabilityFactor := math.Pow(0.95, 10*(1-availability))
-	stratumFactor := math.Pow(0.9, float64(stratum-1))
+	base := 0.95
+	availabilityFactor := math.Pow(base, 10*(1-availability))
+	stratumFactor := math.Pow(base, 2*float64(stratum-1))
 	rootDistance := utils.RootDelayToValue(rootDelay)/2 + utils.RootDelayToValue(rootDispersion)
-	rootDistanceFactor := math.Pow(0.95, rootDistance*100)
+	rootDistanceFactor := math.Pow(base, rootDistance*100)
 	hops := 127
 	for _, initialTTL := range initialTTLs {
 		if ttl <= initialTTL {
 			hops = initialTTL - ttl
 		}
 	}
-	hopsFactor := math.Pow(0.95, float64(hops-1)/100)
+	hopsFactor := math.Pow(base, float64(hops-1)/100)
 	score := 100 * availabilityFactor * stratumFactor * rootDistanceFactor * hopsFactor
 	fmt.Printf("ava = %.2f, str = %.2f, rd = %.2f, hop = %.2f, total = %.2f\n",
 		availabilityFactor, stratumFactor, rootDistanceFactor, hopsFactor, score)
