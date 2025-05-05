@@ -13,7 +13,7 @@ import (
 var data = make([]*Peer, 40)
 
 func TestClusterAlgorithm(t *testing.T) {
-	r := rand.New(rand.NewSource(42))
+	r := rand.New(rand.NewSource(44))
 	shuffle(-300, r)
 	minSurvivors := 3
 	result, sj := ClusterAlgorithm(data, minSurvivors)
@@ -24,7 +24,7 @@ func TestClusterAlgorithm(t *testing.T) {
 }
 
 func TestVisualize(t *testing.T) {
-	r := rand.New(rand.NewSource(44))
+	r := rand.New(rand.NewSource(42))
 	avgOffset := 0.0
 	for i := 0; i < 10; i++ {
 		shuffle(avgOffset, r)
