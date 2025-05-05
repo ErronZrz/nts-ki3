@@ -36,7 +36,6 @@ type KalmanState struct {
 }
 
 // KalmanFilterSkew 使用 2 维状态的 Kalman 滤波器：包含偏差和漂移率
-// KalmanFilterSkew 使用 2 维状态的 Kalman 滤波器：包含偏差和漂移率
 func KalmanFilterSkew(prev KalmanState, measuredOffset, rttErr, dt float64) (next KalmanState) {
 	// 状态预测
 	xPrior := prev.Offset + prev.Skew*dt

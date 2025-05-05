@@ -80,6 +80,7 @@ func once(now int) {
 }
 
 func shuffle(avgOffset float64, rd *rand.Rand) {
+	// 以下数值单位均为 ms
 	avgDelay := 80.0
 	avgRootDelay := 160.0
 	avgDispersion := 100.0
